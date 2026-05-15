@@ -21,7 +21,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import "./RedisGame.css";
 
 const API = import.meta?.env?.VITE_API_BASE || "http://localhost:8080/api";
@@ -1019,6 +1019,334 @@ function commandGuide(command) {
   };
 }
 
+const CITY_DISTRICTS = {
+  strings: { label: "String Vault", position: [-3.7, 0, -1.35], color: "#ff6b4a" },
+  ttl: { label: "TTL Clock", position: [-1.75, 0, -2.55], color: "#f4b24d" },
+  lists: { label: "Queue Rail", position: [1.55, 0, -2.45], color: "#a3e635" },
+  sets: { label: "Set Arena", position: [3.65, 0, -1.12], color: "#2dd4bf" },
+  hashes: { label: "Object Lab", position: [-3.72, 0, 1.18], color: "#f8d08a" },
+  zsets: { label: "Rank Tower", position: [-1.25, 0, 2.62], color: "#f97316" },
+  streams: { label: "Event River", position: [1.45, 0, 2.55], color: "#38d39f" },
+  pubsub: { label: "Signal Tower", position: [3.72, 0, 1.08], color: "#ffcc66" },
+  hll: { label: "HLL Observatory", position: [-0.15, 0, -0.25], color: "#d6ff62" },
+  bitmaps: { label: "Bit Grid", position: [0.0, 0, -3.95], color: "#f472b6" },
+  geo: { label: "Geo Map", position: [0.1, 0, 3.95], color: "#7dd3fc" },
+  scripting: { label: "Lua Forge", position: [3.95, 0, -3.55], color: "#fb7185" },
+  ops: { label: "Ops Radar", position: [-3.95, 0, 3.55], color: "#cbd5a1" },
+};
+
+const COMMAND_DISTRICT = {
+  SET: "strings", GET: "strings", MSET: "strings", MGET: "strings", SETNX: "strings", INCR: "strings", DECR: "strings", APPEND: "strings", STRLEN: "strings", GETSET: "strings",
+  EXPIRE: "ttl", TTL: "ttl",
+  LPUSH: "lists", RPUSH: "lists", LPOP: "lists", RPOP: "lists", LRANGE: "lists", LLEN: "lists", LINDEX: "lists", LTRIM: "lists",
+  SADD: "sets", SMEMBERS: "sets", SREM: "sets", SCARD: "sets", SINTER: "sets", SUNION: "sets", SDIFF: "sets", SISMEMBER: "sets",
+  HSET: "hashes", HGET: "hashes", HMGET: "hashes", HGETALL: "hashes", HDEL: "hashes", HLEN: "hashes", HINCRBY: "hashes",
+  ZADD: "zsets", ZRANGE: "zsets", ZREVRANGE: "zsets", ZREM: "zsets", ZCARD: "zsets", ZRANGEBYSCORE: "zsets", ZSCORE: "zsets", ZRANK: "zsets", ZREVRANK: "zsets", ZINCRBY: "zsets", ZCOUNT: "zsets", ZPOPMIN: "zsets",
+  XADD: "streams", XRANGE: "streams", XLEN: "streams", XDEL: "streams",
+  PUBLISH: "pubsub",
+  PFADD: "hll", PFCOUNT: "hll", PFMERGE: "hll",
+  SETBIT: "bitmaps", GETBIT: "bitmaps", BITCOUNT: "bitmaps",
+  GEOADD: "geo", GEODIST: "geo", GEOPOS: "geo",
+  EVAL: "scripting",
+  TYPE: "ops", KEYS: "ops", SCAN: "ops", INFO: "ops", DBSIZE: "ops",
+};
+
+function splitCommand(command = "") {
+  return normalizeCommand(command).match(/"[^"]*"|\S+/g)?.map((part) => part.replace(/^"|"$/g, "")) || [];
+}
+
+function classifyKey(item) {
+  if (!item) return "ops";
+  if (item.ttl > -1) return "ttl";
+  if (item.key?.includes("visitor") || item.key?.includes("hll")) return "hll";
+  if (item.key?.includes("active") || item.key?.includes("bitmap")) return "bitmaps";
+  if (item.key?.includes("place") || item.key?.includes("geo")) return "geo";
+  if (item.type === "list") return "lists";
+  if (item.type === "set") return "sets";
+  if (item.type === "hash") return "hashes";
+  if (item.type === "zset") return item.key?.includes("place") ? "geo" : "zsets";
+  if (item.type === "stream") return "streams";
+  if (item.type === "string") return "strings";
+  return "ops";
+}
+
+function commandEffect(trace, fallbackCommand, pulse) {
+  const command = trace?.command || fallbackCommand;
+  const parts = splitCommand(command);
+  const op = parts[0]?.toUpperCase() || "READY";
+  const id = COMMAND_DISTRICT[op] || "ops";
+  const district = CITY_DISTRICTS[id];
+  const labels = op === "MSET"
+    ? parts.slice(1).filter((_, index) => index % 2 === 0)
+    : op === "XADD"
+      ? [parts[1], "event"]
+      : parts.slice(1, Math.min(parts.length, 4));
+  return { op, id, at: pulse || Date.now(), color: district.color, labels: labels.length ? labels : [district.label] };
+}
+
+function CityDistrict({ id, district, active, count }) {
+  const group = useRef();
+  useFrame((_, delta) => {
+    if (group.current && active) group.current.rotation.y += delta * 0.18;
+  });
+
+  const baseHeight = id === "zsets" ? 1.2 : id === "pubsub" ? 1.45 : id === "ttl" ? 0.92 : 0.56;
+
+  return (
+    <group ref={group} position={district.position}>
+      <mesh position={[0, 0.03, 0]}>
+        <cylinderGeometry args={[0.78, 0.92, 0.08, 6]} />
+        <meshStandardMaterial color="#13170f" roughness={0.45} metalness={0.18} emissive={district.color} emissiveIntensity={active ? 0.16 : 0.04} />
+      </mesh>
+
+      {id === "lists" ? (
+        <>
+          <mesh position={[0, 0.32, 0]}>
+            <boxGeometry args={[1.48, 0.16, 0.42]} />
+            <meshStandardMaterial color="#1b2212" emissive={district.color} emissiveIntensity={0.13} />
+          </mesh>
+          {[0, 1, 2].map((n) => (
+            <Float key={n} speed={1.4 + n * 0.25} floatIntensity={0.16}>
+              <mesh position={[-0.52 + n * 0.5, 0.52, 0]}>
+                <boxGeometry args={[0.26, 0.2, 0.24]} />
+                <meshStandardMaterial color={district.color} roughness={0.28} metalness={0.25} emissive={district.color} emissiveIntensity={0.22} />
+              </mesh>
+            </Float>
+          ))}
+        </>
+      ) : id === "sets" ? (
+        <>
+          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.43, 0]}>
+            <torusGeometry args={[0.55, 0.025, 8, 80]} />
+            <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.42} />
+          </mesh>
+          {[0, 1, 2, 3].map((n) => {
+            const angle = (n / 4) * Math.PI * 2;
+            return (
+              <mesh key={n} position={[Math.cos(angle) * 0.36, 0.48, Math.sin(angle) * 0.36]}>
+                <sphereGeometry args={[0.08, 16, 16]} />
+                <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.24} />
+              </mesh>
+            );
+          })}
+        </>
+      ) : id === "zsets" ? (
+        [0, 1, 2, 3].map((n) => (
+          <mesh key={n} position={[-0.33 + n * 0.22, 0.22 + n * 0.16, 0]}>
+            <boxGeometry args={[0.16, 0.34 + n * 0.24, 0.28]} />
+            <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.18 + n * 0.04} />
+          </mesh>
+        ))
+      ) : id === "streams" ? (
+        <>
+          <mesh position={[0, 0.25, 0]} rotation={[0, 0.2, 0]}>
+            <boxGeometry args={[1.55, 0.06, 0.32]} />
+            <meshStandardMaterial color="#123325" emissive={district.color} emissiveIntensity={0.24} transparent opacity={0.78} />
+          </mesh>
+          {[0, 1, 2].map((n) => (
+            <Float key={n} speed={2 + n * 0.3} floatIntensity={0.08}>
+              <mesh position={[-0.54 + n * 0.44, 0.4, 0.03]}>
+                <capsuleGeometry args={[0.07, 0.22, 6, 12]} />
+                <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.36} />
+              </mesh>
+            </Float>
+          ))}
+        </>
+      ) : id === "bitmaps" ? (
+        Array.from({ length: 20 }).map((_, n) => (
+          <mesh key={n} position={[-0.45 + (n % 5) * 0.22, 0.25 + Math.floor(n / 5) * 0.08, -0.18 + Math.floor(n / 5) * 0.12]}>
+            <boxGeometry args={[0.13, 0.035, 0.09]} />
+            <meshStandardMaterial color={n % 3 === 0 ? district.color : "#28301f"} emissive={district.color} emissiveIntensity={n % 3 === 0 ? 0.22 : 0.02} />
+          </mesh>
+        ))
+      ) : id === "geo" ? (
+        <>
+          <mesh position={[0, 0.2, 0]}>
+            <boxGeometry args={[1.18, 0.05, 0.78]} />
+            <meshStandardMaterial color="#101a14" emissive={district.color} emissiveIntensity={0.1} />
+          </mesh>
+          {[-0.32, 0.18, 0.42].map((x, n) => (
+            <mesh key={x} position={[x, 0.42 + n * 0.06, -0.22 + n * 0.19]}>
+              <coneGeometry args={[0.08, 0.34, 18]} />
+              <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.32} />
+            </mesh>
+          ))}
+        </>
+      ) : id === "hll" ? (
+        <>
+          <mesh position={[0, 0.45, 0]}>
+            <sphereGeometry args={[0.42, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial color="#1f2a13" emissive={district.color} emissiveIntensity={0.18} transparent opacity={0.86} />
+          </mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.48, 0]}>
+            <torusGeometry args={[0.45, 0.012, 8, 80]} />
+            <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.32} />
+          </mesh>
+        </>
+      ) : (
+        <mesh position={[0, baseHeight / 2, 0]}>
+          <boxGeometry args={id === "pubsub" ? [0.34, baseHeight, 0.34] : [0.68, baseHeight, 0.58]} />
+          <meshStandardMaterial color={id === "strings" ? "#24150f" : "#171a13"} roughness={0.32} metalness={0.22} emissive={district.color} emissiveIntensity={active ? 0.26 : 0.09} />
+        </mesh>
+      )}
+
+      {active ? (
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.12, 0]}>
+          <torusGeometry args={[1.02, 0.012, 8, 96]} />
+          <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.54} transparent opacity={0.84} />
+        </mesh>
+      ) : null}
+
+      <Text position={[0, -0.12, 0.82]} fontSize={0.105} color="#f8f3e7" anchorX="center" anchorY="middle">
+        {district.label}
+      </Text>
+      <Text position={[0, -0.28, 0.82]} fontSize={0.075} color={district.color} anchorX="center" anchorY="middle">
+        {count} live key{count === 1 ? "" : "s"}
+      </Text>
+    </group>
+  );
+}
+
+function CommandPacket({ effect }) {
+  const packet = useRef();
+  const target = CITY_DISTRICTS[effect.id]?.position || [0, 0, 0];
+
+  useFrame(() => {
+    if (!packet.current) return;
+    const age = Math.min((Date.now() - effect.at) / 1400, 1);
+    const ease = 1 - Math.pow(1 - age, 3);
+    packet.current.position.set(-4.9 + (target[0] + 4.9) * ease, 0.7 + Math.sin(ease * Math.PI) * 1.2, -4.55 + (target[2] + 4.55) * ease);
+    packet.current.rotation.x += 0.035;
+    packet.current.rotation.y += 0.055;
+    packet.current.scale.setScalar(1 + Math.sin(age * Math.PI) * 0.3);
+  });
+
+  return (
+    <group ref={packet}>
+      <mesh>
+        <boxGeometry args={[0.22, 0.22, 0.22]} />
+        <meshStandardMaterial color={effect.color} metalness={0.42} roughness={0.18} emissive={effect.color} emissiveIntensity={0.44} />
+      </mesh>
+      <Text position={[0, 0.33, 0]} fontSize={0.115} color="#fff8e8" anchorX="center" anchorY="middle">
+        {effect.op}
+      </Text>
+    </group>
+  );
+}
+
+function KeyMarkers({ keys }) {
+  return (
+    <>
+      {keys.slice(0, 18).map((item, index) => {
+        const id = classifyKey(item);
+        const district = CITY_DISTRICTS[id] || CITY_DISTRICTS.ops;
+        const offset = (index % 5) - 2;
+        const row = Math.floor(index / 5);
+        return (
+          <group key={`${item.key}-${index}`} position={[district.position[0] + offset * 0.18, 0.92 + row * 0.16, district.position[2] - 0.62]}>
+            <mesh>
+              <boxGeometry args={[0.12, 0.12, 0.12]} />
+              <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.28} />
+            </mesh>
+            {index < 10 ? (
+              <Text position={[0, 0.18, 0]} fontSize={0.055} color="#f8f3e7" anchorX="center" anchorY="middle">
+                {item.key.length > 12 ? `${item.key.slice(0, 11)}...` : item.key}
+              </Text>
+            ) : null}
+          </group>
+        );
+      })}
+    </>
+  );
+}
+
+function RedisDataCity({ activeIndex, completed, pulse, keys = [], latestTrace, command }) {
+  const city = useRef();
+  const active = MODULES[activeIndex];
+  const effect = useMemo(() => commandEffect(latestTrace, command, pulse), [latestTrace, command, pulse]);
+  const counts = useMemo(() => {
+    const next = Object.fromEntries(Object.keys(CITY_DISTRICTS).map((id) => [id, 0]));
+    keys.forEach((item) => {
+      const id = classifyKey(item);
+      next[id] = (next[id] || 0) + 1;
+    });
+    return next;
+  }, [keys]);
+
+  useFrame(() => {
+    if (city.current) city.current.rotation.y = Math.sin(Date.now() * 0.00022) * 0.08;
+  });
+
+  return (
+    <>
+      <color attach="background" args={["#090b07"]} />
+      <fog attach="fog" args={["#090b07", 7.5, 17]} />
+      <ambientLight intensity={0.62} />
+      <directionalLight position={[2.8, 8, 4]} intensity={2.35} color="#fff0ce" />
+      <pointLight position={[-4.8, 2.2, -4.5]} color="#d6ff62" intensity={3.2} />
+      <pointLight position={[4.2, 2.4, 2.8]} color="#ff8a4c" intensity={2.6} />
+      <pointLight position={[0, 3.8, 0]} color={effect.color} intensity={3.4} />
+      <Stars radius={24} depth={8} count={800} factor={2.1} saturation={0.1} fade speed={0.35} />
+      <SparkleField count={46} scale={[8, 3.4, 8]} size={1.6} speed={0.16} color="#d6ff62" opacity={0.28} />
+
+      <group ref={city}>
+        <mesh position={[0, -0.03, 0]}>
+          <boxGeometry args={[9.2, 0.06, 9.2]} />
+          <meshStandardMaterial color="#0d110a" roughness={0.6} metalness={0.18} />
+        </mesh>
+        {[-3, -1.5, 0, 1.5, 3].map((line) => (
+          <Fragment key={line}>
+            <mesh position={[line, 0.015, 0]}>
+              <boxGeometry args={[0.018, 0.018, 8.4]} />
+              <meshStandardMaterial color="#242b18" emissive="#d6ff62" emissiveIntensity={0.035} />
+            </mesh>
+            <mesh position={[0, 0.018, line]}>
+              <boxGeometry args={[8.4, 0.018, 0.018]} />
+              <meshStandardMaterial color="#2d2116" emissive="#ff8a4c" emissiveIntensity={0.035} />
+            </mesh>
+          </Fragment>
+        ))}
+
+        <group position={[0, 0, 0]}>
+          <mesh position={[0, 0.52, 0]}>
+            <cylinderGeometry args={[0.62, 0.78, 0.94, 8]} />
+            <meshStandardMaterial color="#2b0f0d" roughness={0.28} metalness={0.4} emissive="#ff3b2f" emissiveIntensity={0.28} />
+          </mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.54, 0]}>
+            <torusGeometry args={[0.92, 0.015, 8, 120]} />
+            <meshStandardMaterial color="#d6ff62" emissive="#d6ff62" emissiveIntensity={0.48} />
+          </mesh>
+          <Text position={[0, 1.16, 0]} fontSize={0.16} color="#fff8e8" anchorX="center" anchorY="middle">
+            REDIS CORE
+          </Text>
+        </group>
+
+        {Object.entries(CITY_DISTRICTS).map(([id, district]) => (
+          <CityDistrict key={id} id={id} district={district} active={effect.id === id || active.id === id} count={counts[id] || 0} />
+        ))}
+
+        {keys.some((item) => item.ttl > -1) ? (
+          <mesh rotation={[Math.PI / 2, 0, 0]} position={[CITY_DISTRICTS.ttl.position[0], 0.62, CITY_DISTRICTS.ttl.position[2]]}>
+            <torusGeometry args={[0.65, 0.018, 8, 120]} />
+            <meshStandardMaterial color="#f4b24d" emissive="#f4b24d" emissiveIntensity={0.62} transparent opacity={0.82} />
+          </mesh>
+        ) : null}
+
+        <KeyMarkers keys={keys} />
+        {pulse ? <CommandPacket effect={effect} /> : null}
+      </group>
+
+      <Text position={[0, 2.52, -3.85]} fontSize={0.2} color="#fff8e8" anchorX="center" anchorY="middle">
+        {effect.op === "READY" ? active.region : `${effect.op} -> ${CITY_DISTRICTS[effect.id].label}`}
+      </Text>
+      <Text position={[0, 2.24, -3.85]} fontSize={0.095} color="#cbd5a1" anchorX="center" anchorY="middle">
+        {keys.length} live keys · {completed.size}/{MODULES.length} modules cleared
+      </Text>
+      <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={0.75} maxPolarAngle={1.25} autoRotate autoRotateSpeed={0.12} />
+    </>
+  );
+}
+
 function RedisScene({ activeIndex, completed, pulse }) {
   const orbit = useRef();
   const core = useRef();
@@ -1112,8 +1440,8 @@ function RedisScene({ activeIndex, completed, pulse }) {
 
 function RedisWorld(props) {
   return (
-    <Canvas camera={{ position: [0, 3.0, 8.4], fov: 45 }} dpr={[1, 1.7]}>
-      <RedisScene {...props} />
+    <Canvas camera={{ position: [0, 5.6, 8.2], fov: 43 }} dpr={[1, 1.7]}>
+      <RedisDataCity {...props} />
     </Canvas>
   );
 }
@@ -1209,7 +1537,7 @@ export default function RedisGame() {
         </div>
 
         <div className="rg-world-shell">
-          <RedisWorld activeIndex={active} completed={completed} pulse={pulse} />
+          <RedisWorld activeIndex={active} completed={completed} pulse={pulse} keys={keys} latestTrace={history[0]} command={command} />
         </div>
 
         <div className="rg-scoreboard">
