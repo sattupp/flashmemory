@@ -727,6 +727,270 @@ const DRILLS = [
     q: "What metrics would you watch for Redis?",
     a: "Memory, evictions, hit ratio, p95/p99 latency, connected clients, slowlog, blocked clients, replication lag, and command mix.",
   },
+  {
+    q: "What is Redis best used for?",
+    a: "Redis is best for low-latency in-memory data access: caching, counters, queues, leaderboards, sessions, rate limits, locks, and realtime coordination.",
+  },
+  {
+    q: "Is Redis a database or a cache?",
+    a: "It can be both. Redis is an in-memory data store with optional persistence, but many systems use it as a cache in front of a durable primary database.",
+  },
+  {
+    q: "What is cache-aside?",
+    a: "The app checks Redis first. On miss, it reads the database, writes the result into Redis with TTL, then returns the value.",
+  },
+  {
+    q: "What is write-through caching?",
+    a: "The app writes to the cache and backing store as part of the same write path, so cache stays warmer but writes become more expensive.",
+  },
+  {
+    q: "What is write-behind caching?",
+    a: "The app writes to cache first and asynchronously flushes to the database later. It improves write latency but increases data-loss risk.",
+  },
+  {
+    q: "What is a cache stampede?",
+    a: "Many clients miss the same expired key at once and overwhelm the database. Use locking, request coalescing, prewarming, or TTL jitter.",
+  },
+  {
+    q: "Why add jitter to TTLs?",
+    a: "Jitter spreads expirations across time so many hot keys do not expire simultaneously and spike database traffic.",
+  },
+  {
+    q: "What is a hot key?",
+    a: "A key receiving disproportionate traffic. It can overload one Redis shard even when overall cluster capacity looks fine.",
+  },
+  {
+    q: "How do you handle hot keys?",
+    a: "Replicate reads, split the key, local-cache carefully, add request coalescing, or redesign the data model to distribute load.",
+  },
+  {
+    q: "What is a big key?",
+    a: "A key whose value or collection is too large. Big keys increase latency, memory fragmentation, network transfer, and operational risk.",
+  },
+  {
+    q: "How do you find big keys?",
+    a: "Use redis-cli --bigkeys in safe environments, MEMORY USAGE samples, SCAN-based inspection, and latency/slowlog clues.",
+  },
+  {
+    q: "Why is Redis fast?",
+    a: "It keeps data in memory, uses efficient data structures, has a simple protocol, and executes commands in an event-loop model with minimal locking.",
+  },
+  {
+    q: "Is Redis single-threaded?",
+    a: "Command execution is mostly single-threaded in classic Redis, while modern Redis can use threads for I/O and background tasks.",
+  },
+  {
+    q: "What does atomic mean in Redis?",
+    a: "A single Redis command runs completely before another command modifies the same server state. Lua scripts also execute atomically.",
+  },
+  {
+    q: "How would you implement a distributed lock?",
+    a: "Use SET lockKey uniqueToken NX EX seconds, release only if the token matches, and keep lock TTL short. Understand Redlock tradeoffs before using it broadly.",
+  },
+  {
+    q: "Why is DEL lockKey unsafe for lock release?",
+    a: "A process might delete a lock it no longer owns if the TTL expired and another client acquired it. Release must verify an ownership token.",
+  },
+  {
+    q: "What is Redlock?",
+    a: "A Redis-based distributed lock algorithm using multiple independent Redis nodes. It is debated; use only when you understand failure assumptions.",
+  },
+  {
+    q: "What are Redis persistence options?",
+    a: "RDB snapshots, AOF append-only logs, or both. RDB is compact and fast to restore; AOF can reduce data loss but costs more write I/O.",
+  },
+  {
+    q: "RDB vs AOF?",
+    a: "RDB periodically snapshots memory, so recent writes can be lost. AOF logs write commands and can be fsynced more often for stronger durability.",
+  },
+  {
+    q: "What is AOF rewrite?",
+    a: "Redis compacts the append-only log by rewriting current state into a smaller equivalent log, reducing disk usage.",
+  },
+  {
+    q: "What is maxmemory?",
+    a: "The memory ceiling Redis uses before applying an eviction policy or rejecting writes, depending on configuration.",
+  },
+  {
+    q: "Name common eviction policies.",
+    a: "noeviction, allkeys-lru, volatile-lru, allkeys-lfu, volatile-lfu, allkeys-random, volatile-random, and volatile-ttl.",
+  },
+  {
+    q: "LRU vs LFU eviction?",
+    a: "LRU evicts least recently used keys. LFU evicts least frequently used keys and better protects repeatedly popular keys.",
+  },
+  {
+    q: "What happens with noeviction?",
+    a: "Redis returns errors for writes that need more memory after maxmemory is reached, while reads can continue.",
+  },
+  {
+    q: "How do Redis expirations work?",
+    a: "Redis uses lazy expiration when keys are accessed and active expiration cycles that sample keys with TTLs in the background.",
+  },
+  {
+    q: "What does TTL return?",
+    a: "Seconds remaining, -1 if the key exists without expiry, and -2 if the key does not exist.",
+  },
+  {
+    q: "What is the difference between DEL and UNLINK?",
+    a: "DEL frees memory synchronously. UNLINK unlinks keys and frees memory asynchronously, reducing blocking for large values.",
+  },
+  {
+    q: "Why use hashes instead of JSON strings?",
+    a: "Hashes allow field-level reads and writes without rewriting a whole serialized object, but they still need schema and size discipline.",
+  },
+  {
+    q: "Can individual hash fields have TTL?",
+    a: "Traditional Redis TTL applies to the top-level key, not individual hash fields.",
+  },
+  {
+    q: "When are lists appropriate?",
+    a: "Simple queues, stacks, and recent item feeds where replay, acknowledgements, and consumer groups are not required.",
+  },
+  {
+    q: "When are Streams better than Lists?",
+    a: "Use Streams when you need durable event logs, replay, consumer groups, pending entries, acknowledgements, or consumer recovery.",
+  },
+  {
+    q: "What is a Redis Stream consumer group?",
+    a: "A way for multiple consumers to share stream processing while Redis tracks delivered but unacknowledged messages.",
+  },
+  {
+    q: "What is the PEL in Redis Streams?",
+    a: "The Pending Entries List stores messages delivered to a consumer group but not yet acknowledged.",
+  },
+  {
+    q: "Why trim streams?",
+    a: "Streams grow forever unless trimmed. Use MAXLEN or retention policies to bound memory.",
+  },
+  {
+    q: "What are sorted sets used for?",
+    a: "Leaderboards, priority queues, ranking feeds, time windows, schedulers, and relevance indexes.",
+  },
+  {
+    q: "How can sorted sets implement rate limiting?",
+    a: "Store request timestamps as scores, remove old timestamps, count recent entries, and reject when count exceeds the limit.",
+  },
+  {
+    q: "How do you model a leaderboard?",
+    a: "Use a sorted set where member is user ID and score is points. Read top users with ZREVRANGE and individual rank with ZREVRANK.",
+  },
+  {
+    q: "What is HyperLogLog used for?",
+    a: "Approximate distinct counts, such as unique visitors, with tiny memory. It cannot list members.",
+  },
+  {
+    q: "When should you not use HyperLogLog?",
+    a: "When exact counts or recoverable member lists are required, such as billing, inventory, or compliance.",
+  },
+  {
+    q: "What are bitmaps useful for?",
+    a: "Compact boolean tracking such as daily active users, attendance, feature exposure, and completion flags.",
+  },
+  {
+    q: "What is the bitmap offset risk?",
+    a: "Memory allocation depends on the highest offset touched. Accidentally setting a huge offset can allocate a large string.",
+  },
+  {
+    q: "What are Redis geo commands backed by?",
+    a: "Redis geo indexes are backed by sorted sets with geohash-like score encoding.",
+  },
+  {
+    q: "What coordinate order does GEOADD use?",
+    a: "Longitude first, latitude second.",
+  },
+  {
+    q: "What is Pub/Sub good for?",
+    a: "Loss-tolerant realtime notifications, cache invalidation hints, and live dashboard signals.",
+  },
+  {
+    q: "Why not use Pub/Sub as a job queue?",
+    a: "Messages are not persisted. Disconnected consumers miss messages permanently.",
+  },
+  {
+    q: "What is Redis replication?",
+    a: "A primary Redis node streams data to replicas, allowing read scaling and failover support.",
+  },
+  {
+    q: "What is Redis Sentinel?",
+    a: "Sentinel monitors Redis primaries and replicas, detects failures, and coordinates automatic failover.",
+  },
+  {
+    q: "What is Redis Cluster?",
+    a: "A sharded Redis deployment that distributes keys across hash slots and supports horizontal scaling.",
+  },
+  {
+    q: "How many hash slots does Redis Cluster use?",
+    a: "16,384 hash slots.",
+  },
+  {
+    q: "What are hash tags in Redis Cluster?",
+    a: "Text inside braces, such as user:{42}:profile, forces related keys into the same hash slot for multi-key operations.",
+  },
+  {
+    q: "Why can multi-key operations fail in Cluster?",
+    a: "If keys are in different hash slots, Redis Cluster cannot run many multi-key commands atomically on one shard.",
+  },
+  {
+    q: "What is pipelining?",
+    a: "Sending multiple commands without waiting for each response, reducing network round-trip overhead.",
+  },
+  {
+    q: "Pipelining vs transactions?",
+    a: "Pipelining improves network efficiency. Transactions group commands with MULTI/EXEC but do not roll back like SQL transactions.",
+  },
+  {
+    q: "What is WATCH used for?",
+    a: "Optimistic locking. Redis aborts EXEC if a watched key changed before the transaction commits.",
+  },
+  {
+    q: "What is Lua scripting used for?",
+    a: "Atomic multi-step logic running server-side, such as compare-and-delete locks or conditional counter updates.",
+  },
+  {
+    q: "What is the risk of long Lua scripts?",
+    a: "Redis blocks other commands while a script runs, so scripts must be short and bounded.",
+  },
+  {
+    q: "How do you observe Redis latency?",
+    a: "Track command latency, SLOWLOG, LATENCY DOCTOR, client-side p95/p99, network RTT, and blocked clients.",
+  },
+  {
+    q: "What is SLOWLOG?",
+    a: "A Redis log of commands that exceeded a configured execution-time threshold, useful for finding expensive operations.",
+  },
+  {
+    q: "What is memory fragmentation?",
+    a: "Allocated memory can exceed logical used memory due to allocator behavior and object churn, increasing RSS.",
+  },
+  {
+    q: "How do you secure Redis?",
+    a: "Bind to private networks, require authentication, use ACLs, TLS where needed, disable dangerous commands, and avoid public exposure.",
+  },
+  {
+    q: "What are Redis ACLs?",
+    a: "Access Control Lists define users, passwords, allowed commands, and key patterns.",
+  },
+  {
+    q: "What should be in a Redis production dashboard?",
+    a: "Used memory, RSS, fragmentation, hit ratio, evictions, expirations, ops/sec, slowlog, blocked clients, connected clients, replication lag, and CPU.",
+  },
+  {
+    q: "How do you avoid storing sensitive data in Redis?",
+    a: "Minimize stored secrets, encrypt sensitive values when required, set TTLs, use ACLs, and avoid logging raw values.",
+  },
+  {
+    q: "What is an idempotency key?",
+    a: "A key that records a request ID so retries do not repeat side effects. Redis SET NX EX is commonly used for this.",
+  },
+  {
+    q: "How do you choose Redis key names?",
+    a: "Use predictable namespaces, entity IDs, purpose, and time windows, such as app:user:42:session or metric:login:2026-05-15.",
+  },
+  {
+    q: "What is the most common Redis production mistake?",
+    a: "Unbounded key or collection growth: no TTL, no trimming, no maxmemory policy, and no cardinality monitoring.",
+  },
 ];
 
 function normalizeCommand(value) {
@@ -1086,33 +1350,40 @@ export default function RedisGame() {
                 <div className="rg-empty"><Zap size={16} /> Execute the suggested command to start the trace.</div>
               ) : history.map((item, index) => (
                 <div className="rg-history-item" key={`${item.command}-${index}`}>
-                  <div><code>{item.command}</code><small>{item.at}</small></div>
-                  <pre>{pretty(item.response?.ok ? item.response.result : item.response?.result)}</pre>
-                  {item.response?.teaching ? (
-                    <div className="rg-trace-teaching">
-                      <section>
-                        <strong>Command meaning</strong>
-                        <p>{item.response.teaching.plainEnglish}</p>
-                      </section>
-                      <section>
-                        <strong>What Redis did</strong>
-                        <ul>
-                          {item.response.teaching.steps.map((step) => <li key={step}>{step}</li>)}
-                        </ul>
-                      </section>
-                      <section>
-                        <strong>Why this output</strong>
-                        <p>{item.response.teaching.outputMeaning}</p>
-                      </section>
-                      <section>
-                        <strong>Try next</strong>
-                        <div className="rg-next-commands">
-                          {item.response.teaching.tryNext.map((next) => (
-                            <button key={next} onClick={() => setCommand(next)}>{next}</button>
-                          ))}
-                        </div>
-                      </section>
+                  <div className="rg-trace-top">
+                    <div>
+                      <code>{item.command}</code>
+                      <small>{item.at}</small>
                     </div>
+                    <strong>{pretty(item.response?.ok ? item.response.result : item.response?.result)}</strong>
+                  </div>
+                  {item.response?.teaching ? (
+                    <>
+                      <p className="rg-trace-summary">{item.response.teaching.outputMeaning}</p>
+                      <details className="rg-trace-details" open={index === 0}>
+                        <summary>Learn what happened</summary>
+                        <div className="rg-trace-teaching">
+                          <section>
+                            <strong>Command meaning</strong>
+                            <p>{item.response.teaching.plainEnglish}</p>
+                          </section>
+                          <section>
+                            <strong>Redis steps</strong>
+                            <ul>
+                              {item.response.teaching.steps.map((step) => <li key={step}>{step}</li>)}
+                            </ul>
+                          </section>
+                          <section>
+                            <strong>Try next</strong>
+                            <div className="rg-next-commands">
+                              {item.response.teaching.tryNext.map((next) => (
+                                <button key={next} onClick={() => setCommand(next)}>{next}</button>
+                              ))}
+                            </div>
+                          </section>
+                        </div>
+                      </details>
+                    </>
                   ) : item.response?.explanation ? <p>{item.response.explanation}</p> : null}
                 </div>
               ))}
@@ -1123,50 +1394,62 @@ export default function RedisGame() {
         {tab === "academy" ? (
           <section className="rg-panel rg-academy">
             <div className="rg-panel-title"><BookOpen size={16} /> Redis academy</div>
-            <div className="rg-academy-grid">
-              {MODULES.map((item) => (
-                <article key={item.id} className="rg-topic-card">
-                  <span style={{ color: item.color }}>{item.level}</span>
-                  <h3>{item.title}</h3>
-                  <p>{TOPIC_DETAILS[item.id].mentalModel}</p>
-                  <div className="rg-topic-columns">
-                    <section>
-                      <h4>Use it for</h4>
-                      <ul>
-                        {TOPIC_DETAILS[item.id].whenToUse.map((line) => <li key={line}>{line}</li>)}
-                      </ul>
-                    </section>
-                    <section>
-                      <h4>Command feel</h4>
-                      <ul>
-                        {TOPIC_DETAILS[item.id].commandNotes.map((line) => <li key={line}>{line}</li>)}
-                      </ul>
-                    </section>
-                    <section>
-                      <h4>Watch out</h4>
-                      <ul>
-                        {TOPIC_DETAILS[item.id].pitfalls.map((line) => <li key={line}>{line}</li>)}
-                      </ul>
-                    </section>
-                    <section>
-                      <h4>Production</h4>
-                      <ul>
-                        {TOPIC_DETAILS[item.id].productionChecklist.map((line) => <li key={line}>{line}</li>)}
-                      </ul>
-                    </section>
-                  </div>
-                  <div className="rg-example-flow">
-                    {TOPIC_DETAILS[item.id].exampleFlow.map((line) => <code key={line}>{line}</code>)}
-                  </div>
-                </article>
-              ))}
+            <div className="rg-academy-shell">
+              <nav className="rg-academy-rail" aria-label="Redis academy topics">
+                {MODULES.map((item, index) => (
+                  <button key={item.id} className={index === active ? "is-active" : ""} onClick={() => selectModule(index)}>
+                    <span style={{ background: item.color }}></span>
+                    <strong>{item.title}</strong>
+                    <small>{item.level}</small>
+                  </button>
+                ))}
+              </nav>
+
+              <article className="rg-academy-stage">
+                <div className="rg-stage-hero">
+                  <span style={{ color: module.color }}>{module.level}</span>
+                  <h3>{module.title}</h3>
+                  <p>{moduleDetails.mentalModel}</p>
+                </div>
+
+                <div className="rg-topic-columns">
+                  <section>
+                    <h4>Use it for</h4>
+                    <ul>
+                      {moduleDetails.whenToUse.map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </section>
+                  <section>
+                    <h4>Command feel</h4>
+                    <ul>
+                      {moduleDetails.commandNotes.map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </section>
+                  <section>
+                    <h4>Watch out</h4>
+                    <ul>
+                      {moduleDetails.pitfalls.map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </section>
+                  <section>
+                    <h4>Production</h4>
+                    <ul>
+                      {moduleDetails.productionChecklist.map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </section>
+                </div>
+
+                <div className="rg-example-flow">
+                  {moduleDetails.exampleFlow.map((line) => <code key={line}>{line}</code>)}
+                </div>
+              </article>
             </div>
           </section>
         ) : null}
 
         {tab === "interview" ? (
           <section className="rg-panel rg-drills">
-            <div className="rg-panel-title"><Trophy size={16} /> Interview simulator</div>
+            <div className="rg-panel-title"><Trophy size={16} /> Interview simulator · {DRILLS.length} Redis questions</div>
             <div className="rg-interview-grid">
               {MODULES.map((item) => (
                 <article key={item.id}>
@@ -1177,12 +1460,14 @@ export default function RedisGame() {
                 </article>
               ))}
             </div>
-            {DRILLS.map((drill, index) => (
-              <details key={drill.q} open={index === 0}>
-                <summary>{drill.q}</summary>
-                <p>{drill.a}</p>
-              </details>
-            ))}
+            <div className="rg-drill-bank">
+              {DRILLS.map((drill, index) => (
+                <details key={drill.q} open={index === 0}>
+                  <summary><span>{String(index + 1).padStart(2, "0")}</span>{drill.q}</summary>
+                  <p>{drill.a}</p>
+                </details>
+              ))}
+            </div>
           </section>
         ) : null}
 
