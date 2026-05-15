@@ -21,7 +21,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Component, useMemo, useRef, useState } from "react";
 import "./RedisGame.css";
 
 const API = import.meta?.env?.VITE_API_BASE || "http://localhost:8080/api";
@@ -74,7 +74,7 @@ const MODULES = [
     title: "Sets",
     region: "Membership Field",
     level: "Data Structures",
-    color: "#14b8a6",
+    color: "#7ddf64",
     commands: ["SADD", "SMEMBERS", "SREM", "SCARD", "SINTER", "SUNION", "SDIFF", "SISMEMBER"],
     starter: "SADD room:online nova",
     verify: ["SADD", "room:online"],
@@ -88,7 +88,7 @@ const MODULES = [
     title: "Hashes",
     region: "Object Lab",
     level: "Data Structures",
-    color: "#38bdf8",
+    color: "#f8d08a",
     commands: ["HSET", "HGET", "HMGET", "HGETALL", "HDEL", "HLEN", "HINCRBY"],
     starter: "HSET user:1 name Nova role engineer",
     verify: ["HSET", "user:1"],
@@ -102,7 +102,7 @@ const MODULES = [
     title: "Sorted Sets",
     region: "Ranking Arena",
     level: "Advanced Structures",
-    color: "#a855f7",
+    color: "#f97316",
     commands: ["ZADD", "ZRANGE", "ZREVRANGE", "ZRANGEBYSCORE", "ZCARD", "ZREM", "ZSCORE", "ZRANK", "ZINCRBY"],
     starter: "ZADD leaderboard 900 nova",
     verify: ["ZADD", "leaderboard"],
@@ -1023,14 +1023,14 @@ const CITY_DISTRICTS = {
   strings: { label: "String Vault", position: [-3.7, 0, -1.35], color: "#ff6b4a" },
   ttl: { label: "TTL Clock", position: [-1.75, 0, -2.55], color: "#f4b24d" },
   lists: { label: "Queue Rail", position: [1.55, 0, -2.45], color: "#a3e635" },
-  sets: { label: "Set Arena", position: [3.65, 0, -1.12], color: "#2dd4bf" },
+  sets: { label: "Set Arena", position: [3.65, 0, -1.12], color: "#7ddf64" },
   hashes: { label: "Object Lab", position: [-3.72, 0, 1.18], color: "#f8d08a" },
   zsets: { label: "Rank Tower", position: [-1.25, 0, 2.62], color: "#f97316" },
   streams: { label: "Event River", position: [1.45, 0, 2.55], color: "#38d39f" },
   pubsub: { label: "Signal Tower", position: [3.72, 0, 1.08], color: "#ffcc66" },
   hll: { label: "HLL Observatory", position: [-0.15, 0, -0.25], color: "#d6ff62" },
-  bitmaps: { label: "Bit Grid", position: [0.0, 0, -3.95], color: "#f472b6" },
-  geo: { label: "Geo Map", position: [0.1, 0, 3.95], color: "#7dd3fc" },
+  bitmaps: { label: "Bit Grid", position: [0.0, 0, -3.95], color: "#d6ff62" },
+  geo: { label: "Geo Map", position: [0.1, 0, 3.95], color: "#8fd36a" },
   scripting: { label: "Lua Forge", position: [3.95, 0, -3.55], color: "#fb7185" },
   ops: { label: "Ops Radar", position: [-3.95, 0, 3.55], color: "#cbd5a1" },
 };
@@ -1092,19 +1092,19 @@ function stageModel(command = "", trace) {
 }
 
 const STAGE_COPY = {
-  strings: ["String Storage", "Key-value cards written into Redis"],
-  lists: ["Queue Conveyor", "Ordered items move through a list"],
-  sets: ["Membership Gate", "Unique members pass; duplicates stop"],
-  hashes: ["Object Fields", "One key stores multiple named fields"],
-  zsets: ["Score Tower", "Members rise by numeric score"],
-  streams: ["Event Timeline", "Events append with generated IDs"],
-  ttl: ["Expiration Clock", "A countdown wraps the selected key"],
-  hll: ["Approx Counter", "Unique count without storing members"],
-  bitmaps: ["Bit Grid", "Compact yes/no flags by offset"],
-  geo: ["Geo Map", "Longitude and latitude members"],
-  scripting: ["Lua Forge", "Atomic server-side script"],
-  ops: ["Ops Radar", "Inspect keys, types, and server state"],
-  pubsub: ["Signal Tower", "Broadcast to active subscribers"],
+  strings: ["Cache Stump", "Key-value planks are hidden before the forest catches them"],
+  lists: ["Log Queue", "Ordered jobs cross the trail from one side of the list"],
+  sets: ["Thorn Gate", "Only unique members pass; duplicates bounce back"],
+  hashes: ["Field Cabin", "One Redis key opens a cabin full of named fields"],
+  zsets: ["Score Ridge", "Members climb higher when their numeric score grows"],
+  streams: ["Event River", "New events float downstream with generated IDs"],
+  ttl: ["Fade Timer", "A countdown ring marks keys that will disappear"],
+  hll: ["Counting Shrine", "Approximate unique counts without storing every visitor"],
+  bitmaps: ["Signal Moss", "Compact yes/no flags light up by offset"],
+  geo: ["Trail Map", "Longitude and latitude members appear as map pins"],
+  scripting: ["Lua Campfire", "Atomic logic runs inside Redis before anyone interrupts"],
+  ops: ["Scout Tower", "Inspect keys, types, and server state"],
+  pubsub: ["Signal Nest", "Messages broadcast to active listeners"],
 };
 
 function stageCopy(model) {
@@ -1117,11 +1117,23 @@ function stageCopy(model) {
 
 function StageLabel({ title, subtitle, color = "#d6ff62" }) {
   return (
-    <group position={[0, 2.22, -1.95]}>
-      <Text fontSize={0.26} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={5.8}>
+    <group position={[0, 1.72, -2.05]}>
+      <mesh position={[0, -0.05, -0.03]}>
+        <boxGeometry args={[4.3, 0.66, 0.16]} />
+        <meshStandardMaterial color="#5b351f" roughness={0.82} metalness={0.04} emissive="#201106" emissiveIntensity={0.22} />
+      </mesh>
+      <mesh position={[-2.18, -0.52, -0.02]}>
+        <cylinderGeometry args={[0.045, 0.065, 0.78, 10]} />
+        <meshStandardMaterial color="#351f13" roughness={0.86} />
+      </mesh>
+      <mesh position={[2.18, -0.52, -0.02]}>
+        <cylinderGeometry args={[0.045, 0.065, 0.78, 10]} />
+        <meshStandardMaterial color="#351f13" roughness={0.86} />
+      </mesh>
+      <Text position={[0, 0.07, 0.07]} fontSize={0.2} color="#fff1cf" anchorX="center" anchorY="middle" maxWidth={3.85}>
         {title}
       </Text>
-      <Text position={[0, -0.3, 0]} fontSize={0.105} color={color} anchorX="center" anchorY="middle" maxWidth={5.4}>
+      <Text position={[0, -0.2, 0.07]} fontSize={0.075} color={color} anchorX="center" anchorY="middle" maxWidth={3.9}>
         {subtitle}
       </Text>
     </group>
@@ -1130,10 +1142,14 @@ function StageLabel({ title, subtitle, color = "#d6ff62" }) {
 
 function ResultBadge({ result, color }) {
   return (
-    <group position={[2.65, 1.35, 0.25]}>
+    <group position={[2.45, 1.28, 0.42]} rotation={[0, -0.22, 0]}>
+      <mesh position={[0, -0.45, -0.04]}>
+        <cylinderGeometry args={[0.045, 0.055, 0.78, 10]} />
+        <meshStandardMaterial color="#2b190f" roughness={0.85} />
+      </mesh>
       <mesh>
-        <boxGeometry args={[1.18, 0.5, 0.12]} />
-        <meshStandardMaterial color="#11140d" metalness={0.24} roughness={0.22} emissive={color} emissiveIntensity={0.14} />
+        <boxGeometry args={[1.26, 0.55, 0.14]} />
+        <meshStandardMaterial color="#4a2a18" roughness={0.74} emissive={color} emissiveIntensity={0.1} />
       </mesh>
       <Text position={[0, 0.04, 0.08]} fontSize={0.16} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={1.0}>
         {result}
@@ -1151,16 +1167,28 @@ function FlyingCommand({ model, color, pulse }) {
     if (!packet.current) return;
     const age = Math.min((Date.now() - (pulse || Date.now())) / 1200, 1);
     const ease = 1 - Math.pow(1 - age, 3);
-    packet.current.position.set(-3.2 + 3.2 * ease, 0.4 + Math.sin(ease * Math.PI) * 0.95, 1.3 - 1.3 * ease);
-    packet.current.rotation.y += 0.04;
+    packet.current.position.set(-3.05 + 3.05 * ease, 0.34 + Math.sin(ease * Math.PI) * 0.62, 1.55 - 1.05 * ease);
+    packet.current.rotation.y = 0.16 * Math.sin(Date.now() * 0.009);
   });
   return (
     <group ref={packet}>
-      <mesh>
-        <boxGeometry args={[0.4, 0.28, 0.22]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.36} metalness={0.35} roughness={0.2} />
+      <mesh position={[0, 0.22, 0]}>
+        <capsuleGeometry args={[0.12, 0.26, 8, 16]} />
+        <meshStandardMaterial color="#e7b15f" roughness={0.62} />
       </mesh>
-      <Text position={[0, 0.3, 0]} fontSize={0.11} color="#fff7e7" anchorX="center" anchorY="middle">
+      <mesh position={[0, 0.5, 0]}>
+        <sphereGeometry args={[0.13, 16, 16]} />
+        <meshStandardMaterial color="#f8d08a" roughness={0.58} />
+      </mesh>
+      <mesh position={[0.16, 0.26, 0.02]}>
+        <boxGeometry args={[0.16, 0.26, 0.16]} />
+        <meshStandardMaterial color="#d8462f" roughness={0.55} emissive="#6b1f15" emissiveIntensity={0.14} />
+      </mesh>
+      <mesh position={[0, 0.63, 0.02]} rotation={[0, 0, 0.08]}>
+        <coneGeometry args={[0.18, 0.18, 4]} />
+        <meshStandardMaterial color={color} roughness={0.62} emissive={color} emissiveIntensity={0.18} />
+      </mesh>
+      <Text position={[0, 0.82, 0.08]} fontSize={0.09} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={0.75}>
         {model.op}
       </Text>
     </group>
@@ -1177,7 +1205,11 @@ function KeyCard({ x, y = 0.65, z = 0, label, value, color, delay = 0 }) {
     <group ref={card} position={[x, y, z]}>
       <mesh>
         <boxGeometry args={[1.22, 0.64, 0.12]} />
-        <meshStandardMaterial color="#161a10" metalness={0.22} roughness={0.24} emissive={color} emissiveIntensity={0.12} />
+        <meshStandardMaterial color="#4b2b19" roughness={0.76} emissive={color} emissiveIntensity={0.08} />
+      </mesh>
+      <mesh position={[0, -0.36, -0.02]}>
+        <cylinderGeometry args={[0.025, 0.035, 0.42, 8]} />
+        <meshStandardMaterial color="#28170e" roughness={0.82} />
       </mesh>
       <Text position={[0, 0.14, 0.08]} fontSize={0.085} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={0.96}>
         {label}
@@ -1193,12 +1225,12 @@ function StringStage({ model, color }) {
   const cards = model.op === "MSET" && model.pairs.length ? model.pairs.slice(0, 3) : [[model.key, model.value]];
   return (
     <group>
-      <mesh position={[0, 0.45, -0.12]}>
-        <boxGeometry args={[3.9, 1.06, 0.22]} />
-        <meshStandardMaterial color="#24140e" roughness={0.3} metalness={0.32} emissive="#ff5f3f" emissiveIntensity={0.14} />
+      <mesh position={[0, 0.16, -0.1]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[1.15, 1.0, 0.28, 32]} />
+        <meshStandardMaterial color="#56331e" roughness={0.85} emissive="#1a0d06" emissiveIntensity={0.18} />
       </mesh>
       {cards.map(([label, value], index) => (
-        <KeyCard key={`${label}-${index}`} x={(index - (cards.length - 1) / 2) * 1.32} label={label} value={value} color={color} delay={index} />
+        <KeyCard key={`${label}-${index}`} x={(index - (cards.length - 1) / 2) * 1.22} y={0.72} z={0.1} label={label} value={value} color={color} delay={index} />
       ))}
     </group>
   );
@@ -1208,12 +1240,14 @@ function ListStage({ model, color }) {
   const items = model.args.slice(1, 5);
   return (
     <group>
-      <mesh position={[0, 0.45, 0]}>
-        <boxGeometry args={[4.4, 0.22, 0.65]} />
-        <meshStandardMaterial color="#17210d" emissive={color} emissiveIntensity={0.14} />
-      </mesh>
+      {[-1.65, -0.55, 0.55, 1.65].map((x, index) => (
+        <mesh key={`log-${x}`} position={[x, 0.38, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.16, 0.16, 0.95, 18]} />
+          <meshStandardMaterial color={index % 2 ? "#6d4426" : "#54311c"} roughness={0.82} emissive={color} emissiveIntensity={0.04} />
+        </mesh>
+      ))}
       {[-1.45, -0.55, 0.35, 1.25].map((x, index) => (
-        <KeyCard key={x} x={x} y={0.85} label={`item ${index + 1}`} value={items[index] || ["email", "report", "sync", "alert"][index]} color={color} delay={index} />
+        <KeyCard key={x} x={x} y={0.9} label={`slot ${index + 1}`} value={items[index] || ["email", "report", "sync", "alert"][index]} color={color} delay={index} />
       ))}
     </group>
   );
@@ -1225,9 +1259,15 @@ function SetStage({ model, color }) {
   return (
     <group>
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.65, 0]}>
-        <torusGeometry args={[1.25, 0.045, 12, 120]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.42} />
+        <torusGeometry args={[1.25, 0.055, 12, 120]} />
+        <meshStandardMaterial color="#213715" emissive={color} emissiveIntensity={0.28} />
       </mesh>
+      {[-1.15, -0.55, 0.05, 0.65, 1.25].map((x) => (
+        <mesh key={x} position={[x, 0.75, -0.65]} rotation={[0.45, 0, 0]}>
+          <coneGeometry args={[0.08, 0.42, 8]} />
+          <meshStandardMaterial color="#9bd45f" roughness={0.7} />
+        </mesh>
+      ))}
       {[0, 1, 2].map((n) => {
         const angle = (n / 3) * Math.PI * 2;
         return <KeyCard key={n} x={Math.cos(angle) * 1.05} y={0.72} z={Math.sin(angle) * 0.55} label="member" value={members[n] || ["nova", "kai", "redis"][n]} color={color} delay={n} />;
@@ -1247,7 +1287,7 @@ function HashStage({ model, color }) {
     <group>
       <mesh position={[0, 0.75, -0.08]}>
         <boxGeometry args={[3.25, 1.6, 0.22]} />
-        <meshStandardMaterial color="#1a1510" metalness={0.24} roughness={0.28} emissive={color} emissiveIntensity={0.1} />
+        <meshStandardMaterial color="#4a2b18" roughness={0.78} emissive={color} emissiveIntensity={0.08} />
       </mesh>
       {fields.map(([field, value], index) => (
         <KeyCard key={field} x={(index % 2) * 1.36 - 0.68} y={1.08 - Math.floor(index / 2) * 0.65} label={field} value={value} color={color} delay={index} />
@@ -1264,7 +1304,7 @@ function ZSetStage({ model, color }) {
         <group key={`${member}-${index}`} position={[(index - 1.5) * 0.72, 0.28 + index * 0.18, 0]}>
           <mesh>
             <boxGeometry args={[0.48, 0.55 + index * 0.33, 0.42]} />
-            <meshStandardMaterial color="#26170e" emissive={color} emissiveIntensity={0.16 + index * 0.04} metalness={0.26} roughness={0.22} />
+            <meshStandardMaterial color="#5b351f" emissive={color} emissiveIntensity={0.1 + index * 0.04} roughness={0.78} />
           </mesh>
           <Text position={[0, 0.42 + index * 0.18, 0.25]} fontSize={0.105} color="#fff7e7" anchorX="center" anchorY="middle">
             {member}
@@ -1282,8 +1322,8 @@ function StreamStage({ model, color }) {
   return (
     <group>
       <mesh position={[0, 0.6, 0]}>
-        <boxGeometry args={[4.4, 0.12, 0.35]} />
-        <meshStandardMaterial color="#102417" emissive={color} emissiveIntensity={0.18} />
+        <boxGeometry args={[4.4, 0.12, 0.52]} />
+        <meshStandardMaterial color="#1d4d3a" emissive="#38d39f" emissiveIntensity={0.16} roughness={0.5} />
       </mesh>
       {[-1.4, -0.45, 0.5, 1.45].map((x, index) => (
         <group key={x} position={[x, 0.92, 0]}>
@@ -1322,7 +1362,7 @@ function SpecialtyStage({ model, color }) {
     <group>
       <mesh position={[0, 0.75, 0]}>
         <icosahedronGeometry args={[0.9, 1]} />
-        <meshStandardMaterial color="#171a10" metalness={0.36} roughness={0.2} emissive={color} emissiveIntensity={0.28} />
+        <meshStandardMaterial color="#3a2416" roughness={0.64} emissive={color} emissiveIntensity={0.22} />
       </mesh>
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.75, 0]}>
         <torusGeometry args={[1.25, 0.02, 8, 120]} />
@@ -1338,8 +1378,8 @@ function SpecialtyStage({ model, color }) {
 function MiniKeyStrip({ keys }) {
   return (
     <group position={[0, -0.03, 1.9]}>
-      <Text position={[0, 0.38, 0]} fontSize={0.08} color="#aaa88f" anchorX="center" anchorY="middle">
-        LIVE KEYSPACE
+      <Text position={[0, 0.38, 0]} fontSize={0.08} color="#c2b48a" anchorX="center" anchorY="middle">
+        CAMP INVENTORY
       </Text>
       {keys.slice(0, 8).map((item, index) => {
         const color = CITY_DISTRICTS[classifyKey(item)]?.color || "#d6ff62";
@@ -1347,7 +1387,7 @@ function MiniKeyStrip({ keys }) {
           <group key={`${item.key}-${index}`} position={[(index - 3.5) * 0.48, 0.08, 0]}>
             <mesh>
               <boxGeometry args={[0.38, 0.14, 0.12]} />
-              <meshStandardMaterial color="#12160d" emissive={color} emissiveIntensity={0.18} />
+              <meshStandardMaterial color="#4b2b19" emissive={color} emissiveIntensity={0.1} />
             </mesh>
             <Text position={[0, 0.13, 0.08]} fontSize={0.04} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={0.34}>
               {item.key}
@@ -1359,37 +1399,109 @@ function MiniKeyStrip({ keys }) {
   );
 }
 
+function AngryTree({ x, z, scale = 1, awake = false, color = "#7ddf64" }) {
+  return (
+    <group position={[x, 0, z]} scale={scale}>
+      <mesh position={[0, 0.45, 0]}>
+        <cylinderGeometry args={[0.15, 0.23, 0.9, 10]} />
+        <meshStandardMaterial color="#4a2a18" roughness={0.88} />
+      </mesh>
+      <mesh position={[0, 1.08, 0]}>
+        <sphereGeometry args={[0.46, 18, 14]} />
+        <meshStandardMaterial color={awake ? "#355b22" : "#29451c"} roughness={0.82} emissive={awake ? color : "#13210d"} emissiveIntensity={awake ? 0.12 : 0.04} />
+      </mesh>
+      <mesh position={[-0.26, 0.92, 0.06]}>
+        <sphereGeometry args={[0.3, 14, 10]} />
+        <meshStandardMaterial color="#203715" roughness={0.85} />
+      </mesh>
+      <mesh position={[0.28, 0.95, 0.04]}>
+        <sphereGeometry args={[0.32, 14, 10]} />
+        <meshStandardMaterial color="#203715" roughness={0.85} />
+      </mesh>
+      <mesh position={[-0.1, 1.04, 0.42]}>
+        <sphereGeometry args={[0.045, 10, 8]} />
+        <meshStandardMaterial color="#fff4cf" emissive="#fff4cf" emissiveIntensity={awake ? 0.25 : 0.08} />
+      </mesh>
+      <mesh position={[0.11, 1.04, 0.42]}>
+        <sphereGeometry args={[0.045, 10, 8]} />
+        <meshStandardMaterial color="#fff4cf" emissive="#fff4cf" emissiveIntensity={awake ? 0.25 : 0.08} />
+      </mesh>
+      <mesh position={[-0.1, 1.04, 0.46]}>
+        <sphereGeometry args={[0.018, 8, 6]} />
+        <meshStandardMaterial color="#17100b" />
+      </mesh>
+      <mesh position={[0.11, 1.04, 0.46]}>
+        <sphereGeometry args={[0.018, 8, 6]} />
+        <meshStandardMaterial color="#17100b" />
+      </mesh>
+      <mesh position={[0, 0.89, 0.43]} rotation={[0, 0, Math.PI / 2]}>
+        <capsuleGeometry args={[0.018, 0.18, 5, 8]} />
+        <meshStandardMaterial color={awake ? "#ff6b4a" : "#c28a4a"} />
+      </mesh>
+    </group>
+  );
+}
+
+function ForestFloor({ color, activeIndex }) {
+  const trees = [
+    [-2.65, -1.18, 0.95],
+    [-2.9, 0.35, 0.78],
+    [-2.25, 1.42, 0.92],
+    [2.7, -1.28, 0.86],
+    [3.02, 0.18, 0.72],
+    [2.35, 1.42, 0.98],
+  ];
+
+  return (
+    <group>
+      <mesh position={[0, -0.1, 0]}>
+        <boxGeometry args={[6.1, 0.12, 4.45]} />
+        <meshStandardMaterial color="#172412" roughness={0.92} />
+      </mesh>
+      <mesh position={[0, -0.025, 0.78]} rotation={[0, 0.02, 0]}>
+        <boxGeometry args={[4.8, 0.025, 0.82]} />
+        <meshStandardMaterial color="#6e5632" roughness={0.88} emissive="#2c1c0d" emissiveIntensity={0.08} />
+      </mesh>
+      <mesh position={[-1.15, 0.01, 0.52]} rotation={[0, 0.16, 0]}>
+        <boxGeometry args={[1.9, 0.035, 0.54]} />
+        <meshStandardMaterial color="#8a6a3a" roughness={0.86} />
+      </mesh>
+      <mesh position={[1.1, 0.01, 0.32]} rotation={[0, -0.18, 0]}>
+        <boxGeometry args={[1.9, 0.035, 0.54]} />
+        <meshStandardMaterial color="#8a6a3a" roughness={0.86} />
+      </mesh>
+      {trees.map(([x, z, scale], index) => (
+        <AngryTree key={`${x}-${z}`} x={x} z={z} scale={scale} awake={index === activeIndex % trees.length} color={color} />
+      ))}
+      {[-2.1, -1.25, -0.35, 0.45, 1.3, 2.08].map((x, index) => (
+        <mesh key={x} position={[x, 0.05, 1.62 + (index % 2) * 0.1]}>
+          <sphereGeometry args={[0.07, 10, 8]} />
+          <meshStandardMaterial color={index % 2 ? "#9e7b45" : color} roughness={0.78} emissive={index % 2 ? "#25160a" : color} emissiveIntensity={index % 2 ? 0.05 : 0.18} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 function CommandStageScene({ activeIndex, completed, pulse, keys = [], latestTrace, command }) {
   const model = useMemo(() => stageModel(command, latestTrace), [command, latestTrace]);
   const district = CITY_DISTRICTS[model.type] || CITY_DISTRICTS.ops;
   const copy = stageCopy(model);
-  const stage = useRef();
-
-  useFrame(() => {
-    if (stage.current) stage.current.rotation.y = Math.sin(Date.now() * 0.00016) * 0.018;
-  });
 
   return (
     <>
-      <color attach="background" args={["#080a06"]} />
-      <fog attach="fog" args={["#080a06", 7, 15]} />
-      <ambientLight intensity={0.72} />
-      <directionalLight position={[3, 6, 4]} intensity={2.25} color="#fff0ce" />
-      <pointLight position={[-2.8, 2.4, 2.8]} color="#d6ff62" intensity={2.4} />
-      <pointLight position={[2.8, 2.2, -1.8]} color={district.color} intensity={3.2} />
-      <SparkleField count={28} scale={[5, 2.5, 4]} size={1.2} speed={0.12} color={district.color} opacity={0.18} />
+      <color attach="background" args={["#0c1309"]} />
+      <fog attach="fog" args={["#0c1309", 6.8, 13.5]} />
+      <ambientLight intensity={0.62} />
+      <directionalLight position={[2.5, 6.5, 4.8]} intensity={2.8} color="#ffe4a8" />
+      <pointLight position={[-2.8, 2.4, 2.8]} color="#f2c069" intensity={2.15} />
+      <pointLight position={[2.8, 2.2, -1.8]} color={district.color} intensity={2.55} />
+      <SparkleField count={34} scale={[5.4, 2.7, 4.2]} size={1.1} speed={0.08} color={district.color} opacity={0.16} />
 
       <StageLabel title={copy.title} subtitle={copy.subtitle} color={district.color} />
 
-      <group ref={stage}>
-        <mesh position={[0, -0.08, 0]}>
-          <boxGeometry args={[5.8, 0.08, 4.35]} />
-          <meshStandardMaterial color="#10130b" roughness={0.52} metalness={0.18} />
-        </mesh>
-        <mesh position={[0, -0.02, -1.62]}>
-          <boxGeometry args={[5.2, 0.025, 0.04]} />
-          <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.25} />
-        </mesh>
+      <group>
+        <ForestFloor color={district.color} activeIndex={activeIndex} />
 
         {model.type === "strings" ? <StringStage model={model} color={district.color} /> : null}
         {model.type === "lists" ? <ListStage model={model} color={district.color} /> : null}
@@ -1405,19 +1517,65 @@ function CommandStageScene({ activeIndex, completed, pulse, keys = [], latestTra
         <MiniKeyStrip keys={keys} />
       </group>
 
-      <Text position={[0, -1.7, 0]} fontSize={0.09} color="#aaa88f" anchorX="center" anchorY="middle">
-        {keys.length} live keys · {completed.size}/{MODULES.length} modules cleared
+      <Text position={[0, -1.72, 0]} fontSize={0.085} color="#c2b48a" anchorX="center" anchorY="middle">
+        {keys.length} camp keys | {completed.size}/{MODULES.length} forest trials cleared
       </Text>
-      <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={0.82} maxPolarAngle={1.34} autoRotate={false} />
+      <OrbitControls enablePan={false} enableZoom={false} enableRotate={false} minPolarAngle={0.82} maxPolarAngle={1.34} autoRotate={false} />
     </>
+  );
+}
+
+class WorldErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+function RedisForestFallback({ completed, keys = [], latestTrace, command }) {
+  const model = stageModel(command, latestTrace);
+  const district = CITY_DISTRICTS[model.type] || CITY_DISTRICTS.ops;
+  const copy = stageCopy(model);
+
+  return (
+    <div className="rg-forest-fallback">
+      <div className="rg-fallback-sky" />
+      <div className="rg-fallback-title">
+        <strong>{copy.title}</strong>
+        <span>{copy.subtitle}</span>
+      </div>
+      <div className="rg-fallback-stage" style={{ "--stage": district.color }}>
+        <div className="rg-fallback-tree rg-fallback-tree-left"><span /><i /><i /></div>
+        <div className="rg-fallback-path">
+          <b>{model.op}</b>
+          <small>{model.result}</small>
+        </div>
+        <div className="rg-fallback-tree rg-fallback-tree-right"><span /><i /><i /></div>
+      </div>
+      <div className="rg-fallback-inventory">
+        <span>{keys.length} camp keys</span>
+        <span>{completed.size}/{MODULES.length} trials cleared</span>
+      </div>
+    </div>
   );
 }
 
 function RedisWorld(props) {
   return (
-    <Canvas camera={{ position: [0, 3.35, 6.2], fov: 38 }} dpr={[1, 1.7]}>
-      <CommandStageScene {...props} />
-    </Canvas>
+    <WorldErrorBoundary fallback={<RedisForestFallback {...props} />}>
+      <Canvas camera={{ position: [0, 3.75, 7.45], fov: 35 }} dpr={[1, 1.7]}>
+        <CommandStageScene {...props} />
+      </Canvas>
+    </WorldErrorBoundary>
   );
 }
 
@@ -1497,18 +1655,18 @@ export default function RedisGame() {
         <div className="rg-brand">
           <span><Database size={20} /></span>
           <div>
-            <h1>Redis Quest</h1>
-            <p>Interactive Redis systems lab</p>
+            <h1>Redis Forest</h1>
+            <p>Escape-room Redis simulator</p>
           </div>
         </div>
 
         <div className="rg-premium-ribbon">
-          <span>Data models</span>
-          <span>Latency</span>
-          <span>Eviction</span>
-          <span>Streams</span>
-          <span>Cluster</span>
-          <span>Interviews</span>
+          <span>Cache stumps</span>
+          <span>TTL traps</span>
+          <span>Log queues</span>
+          <span>Thorn sets</span>
+          <span>Event river</span>
+          <span>Boss interview</span>
         </div>
 
         <div className="rg-world-shell">
@@ -1533,7 +1691,7 @@ export default function RedisGame() {
           <div>
             <p className="rg-eyebrow"><Sparkles size={14} /> Redis mastery campaign</p>
             <h2><span>{module.region}</span></h2>
-            <p>{module.title}: {module.simple}</p>
+            <p>{module.title}: play commands, watch the forest react, then read why Redis returned that exact output.</p>
           </div>
           <div className="rg-tabs">
             {[
