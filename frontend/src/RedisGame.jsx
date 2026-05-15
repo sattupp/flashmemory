@@ -1091,13 +1091,37 @@ function stageModel(command = "", trace) {
   };
 }
 
+const STAGE_COPY = {
+  strings: ["String Storage", "Key-value cards written into Redis"],
+  lists: ["Queue Conveyor", "Ordered items move through a list"],
+  sets: ["Membership Gate", "Unique members pass; duplicates stop"],
+  hashes: ["Object Fields", "One key stores multiple named fields"],
+  zsets: ["Score Tower", "Members rise by numeric score"],
+  streams: ["Event Timeline", "Events append with generated IDs"],
+  ttl: ["Expiration Clock", "A countdown wraps the selected key"],
+  hll: ["Approx Counter", "Unique count without storing members"],
+  bitmaps: ["Bit Grid", "Compact yes/no flags by offset"],
+  geo: ["Geo Map", "Longitude and latitude members"],
+  scripting: ["Lua Forge", "Atomic server-side script"],
+  ops: ["Ops Radar", "Inspect keys, types, and server state"],
+  pubsub: ["Signal Tower", "Broadcast to active subscribers"],
+};
+
+function stageCopy(model) {
+  const [title, subtitle] = STAGE_COPY[model.type] || ["Redis Stage", "Command visualization"];
+  return {
+    title: model.op === "READY" ? title : `${model.op} · ${title}`,
+    subtitle,
+  };
+}
+
 function StageLabel({ title, subtitle, color = "#d6ff62" }) {
   return (
-    <group position={[0, 2.05, -1.8]}>
-      <Text fontSize={0.34} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={5.8}>
+    <group position={[0, 2.22, -1.95]}>
+      <Text fontSize={0.26} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={5.8}>
         {title}
       </Text>
-      <Text position={[0, -0.38, 0]} fontSize={0.13} color={color} anchorX="center" anchorY="middle" maxWidth={5.4}>
+      <Text position={[0, -0.3, 0]} fontSize={0.105} color={color} anchorX="center" anchorY="middle" maxWidth={5.4}>
         {subtitle}
       </Text>
     </group>
@@ -1169,14 +1193,10 @@ function StringStage({ model, color }) {
   const cards = model.op === "MSET" && model.pairs.length ? model.pairs.slice(0, 3) : [[model.key, model.value]];
   return (
     <group>
-      <StageLabel title={`${model.op} String Storage`} subtitle="Large key cards slide into the Redis string rack" color={color} />
       <mesh position={[0, 0.45, -0.12]}>
         <boxGeometry args={[3.9, 1.06, 0.22]} />
         <meshStandardMaterial color="#24140e" roughness={0.3} metalness={0.32} emissive="#ff5f3f" emissiveIntensity={0.14} />
       </mesh>
-      <Text position={[0, 1.12, 0.08]} fontSize={0.16} color="#fff7e7" anchorX="center" anchorY="middle">
-        STRING VAULT
-      </Text>
       {cards.map(([label, value], index) => (
         <KeyCard key={`${label}-${index}`} x={(index - (cards.length - 1) / 2) * 1.32} label={label} value={value} color={color} delay={index} />
       ))}
@@ -1188,7 +1208,6 @@ function ListStage({ model, color }) {
   const items = model.args.slice(1, 5);
   return (
     <group>
-      <StageLabel title={`${model.op} Queue Conveyor`} subtitle="List commands push, pop, trim, and inspect ordered items" color={color} />
       <mesh position={[0, 0.45, 0]}>
         <boxGeometry args={[4.4, 0.22, 0.65]} />
         <meshStandardMaterial color="#17210d" emissive={color} emissiveIntensity={0.14} />
@@ -1205,7 +1224,6 @@ function SetStage({ model, color }) {
   const hasDuplicate = new Set(members).size !== members.length && members.length > 1;
   return (
     <group>
-      <StageLabel title={`${model.op} Membership Gate`} subtitle="Sets keep unique members and reject duplicates" color={color} />
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.65, 0]}>
         <torusGeometry args={[1.25, 0.045, 12, 120]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.42} />
@@ -1215,7 +1233,7 @@ function SetStage({ model, color }) {
         return <KeyCard key={n} x={Math.cos(angle) * 1.05} y={0.72} z={Math.sin(angle) * 0.55} label="member" value={members[n] || ["nova", "kai", "redis"][n]} color={color} delay={n} />;
       })}
       {hasDuplicate ? (
-        <Text position={[0, 1.45, 0.08]} fontSize={0.17} color="#ff5f3f" anchorX="center" anchorY="middle">
+        <Text position={[0, 1.45, 0.08]} fontSize={0.14} color="#ff5f3f" anchorX="center" anchorY="middle">
           duplicate blocked
         </Text>
       ) : null}
@@ -1227,7 +1245,6 @@ function HashStage({ model, color }) {
   const fields = model.pairs.length ? model.pairs.slice(0, 4) : [["name", "Nova"], ["role", "engineer"], ["views", "1"]];
   return (
     <group>
-      <StageLabel title={`${model.op} Object Lab`} subtitle="Hashes update fields without rewriting the whole object" color={color} />
       <mesh position={[0, 0.75, -0.08]}>
         <boxGeometry args={[3.25, 1.6, 0.22]} />
         <meshStandardMaterial color="#1a1510" metalness={0.24} roughness={0.28} emissive={color} emissiveIntensity={0.1} />
@@ -1243,7 +1260,6 @@ function ZSetStage({ model, color }) {
   const rows = model.pairs.length ? model.pairs.slice(0, 4) : [["900", "nova"], ["750", "kai"], ["620", "redis"]];
   return (
     <group>
-      <StageLabel title={`${model.op} Leaderboard Tower`} subtitle="Sorted sets arrange unique members by numeric score" color={color} />
       {rows.map(([score, member], index) => (
         <group key={`${member}-${index}`} position={[(index - 1.5) * 0.72, 0.28 + index * 0.18, 0]}>
           <mesh>
@@ -1265,7 +1281,6 @@ function ZSetStage({ model, color }) {
 function StreamStage({ model, color }) {
   return (
     <group>
-      <StageLabel title={`${model.op} Event Timeline`} subtitle="Streams append durable events with generated IDs" color={color} />
       <mesh position={[0, 0.6, 0]}>
         <boxGeometry args={[4.4, 0.12, 0.35]} />
         <meshStandardMaterial color="#102417" emissive={color} emissiveIntensity={0.18} />
@@ -1292,7 +1307,6 @@ function TTLStage({ model, color }) {
   });
   return (
     <group>
-      <StageLabel title={`${model.op} Expiration Clock`} subtitle="A TTL wraps a key with a countdown ring" color={color} />
       <KeyCard x={0} y={0.78} label={model.key} value={model.value || "60s"} color={color} />
       <mesh ref={ring} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.8, 0]}>
         <torusGeometry args={[1.02, 0.035, 12, 120]} />
@@ -1303,17 +1317,9 @@ function TTLStage({ model, color }) {
 }
 
 function SpecialtyStage({ model, color }) {
-  const copy = {
-    hll: ["Approx Counter", "Counts unique values with tiny memory"],
-    bitmaps: ["Bit Grid", "Turns offsets into compact yes/no flags"],
-    geo: ["Geo Map", "Stores longitude/latitude members"],
-    scripting: ["Lua Forge", "Runs small atomic server-side logic"],
-    ops: ["Ops Radar", "Inspects keys, types, memory, and server state"],
-    pubsub: ["Signal Tower", "Broadcasts to active subscribers"],
-  }[model.type] || ["Redis Stage", "Command visualization"];
+  const copy = STAGE_COPY[model.type] || ["Redis Stage", "Command visualization"];
   return (
     <group>
-      <StageLabel title={`${model.op} ${copy[0]}`} subtitle={copy[1]} color={color} />
       <mesh position={[0, 0.75, 0]}>
         <icosahedronGeometry args={[0.9, 1]} />
         <meshStandardMaterial color="#171a10" metalness={0.36} roughness={0.2} emissive={color} emissiveIntensity={0.28} />
@@ -1356,10 +1362,11 @@ function MiniKeyStrip({ keys }) {
 function CommandStageScene({ activeIndex, completed, pulse, keys = [], latestTrace, command }) {
   const model = useMemo(() => stageModel(command, latestTrace), [command, latestTrace]);
   const district = CITY_DISTRICTS[model.type] || CITY_DISTRICTS.ops;
+  const copy = stageCopy(model);
   const stage = useRef();
 
   useFrame(() => {
-    if (stage.current) stage.current.rotation.y = Math.sin(Date.now() * 0.00018) * 0.045;
+    if (stage.current) stage.current.rotation.y = Math.sin(Date.now() * 0.00016) * 0.018;
   });
 
   return (
@@ -1371,6 +1378,8 @@ function CommandStageScene({ activeIndex, completed, pulse, keys = [], latestTra
       <pointLight position={[-2.8, 2.4, 2.8]} color="#d6ff62" intensity={2.4} />
       <pointLight position={[2.8, 2.2, -1.8]} color={district.color} intensity={3.2} />
       <SparkleField count={28} scale={[5, 2.5, 4]} size={1.2} speed={0.12} color={district.color} opacity={0.18} />
+
+      <StageLabel title={copy.title} subtitle={copy.subtitle} color={district.color} />
 
       <group ref={stage}>
         <mesh position={[0, -0.08, 0]}>
@@ -1399,7 +1408,7 @@ function CommandStageScene({ activeIndex, completed, pulse, keys = [], latestTra
       <Text position={[0, -1.7, 0]} fontSize={0.09} color="#aaa88f" anchorX="center" anchorY="middle">
         {keys.length} live keys · {completed.size}/{MODULES.length} modules cleared
       </Text>
-      <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={0.82} maxPolarAngle={1.34} autoRotate autoRotateSpeed={0.08} />
+      <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={0.82} maxPolarAngle={1.34} autoRotate={false} />
     </>
   );
 }
