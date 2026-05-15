@@ -23,6 +23,8 @@ html,
 body,
 #root {
   min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -42,16 +44,18 @@ button {
 
 .rg-app {
   position: relative;
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(390px, 38vw) 1fr;
+  display: flex;
+  flex-direction: column;
   color: var(--ink);
   background:
     radial-gradient(circle at 16% 10%, rgba(240, 90, 59, 0.16), transparent 29%),
     radial-gradient(circle at 82% 13%, rgba(214, 255, 98, 0.12), transparent 27%),
     radial-gradient(circle at 50% 92%, rgba(138, 106, 58, 0.18), transparent 34%),
     linear-gradient(135deg, #11190d 0%, #21311a 48%, #0c1309 100%);
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .rg-app::before,
@@ -102,11 +106,30 @@ button {
     rgba(15, 23, 11, 0.94);
 }
 
+.rg-topbar {
+  z-index: 2;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(280px, 0.8fr) auto minmax(170px, 0.55fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(17, 25, 13, 0.96), rgba(17, 25, 13, 0.78)),
+    rgba(11, 18, 8, 0.94);
+  backdrop-filter: blur(18px);
+}
+
 .rg-brand,
 .rg-scoreboard,
 .rg-player,
 .rg-panel,
 .rg-tabs {
+  min-width: 0;
   border: 1px solid var(--line);
   background: var(--panel);
   backdrop-filter: blur(18px);
@@ -431,6 +454,8 @@ button {
 
 .rg-main {
   z-index: 1;
+  width: 100%;
+  max-width: 100vw;
   min-width: 0;
   min-height: 100vh;
   padding: 18px;
@@ -441,7 +466,7 @@ button {
 
 .rg-header {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   gap: 14px;
   align-items: end;
 }
@@ -449,7 +474,7 @@ button {
 .rg-header h2 {
   margin-top: 6px;
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: 64px;
+  font-size: clamp(42px, 6vw, 82px);
   line-height: 1.03;
   letter-spacing: 0;
 }
@@ -523,6 +548,374 @@ button {
     "command map"
     "history keys";
   gap: 14px;
+}
+
+.rg-factory-layout {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1.05fr) minmax(390px, 0.62fr);
+  grid-template-areas:
+    "stage command"
+    "stage map"
+    "history keys";
+  gap: 14px;
+}
+
+.rg-factory-stage {
+  grid-area: stage;
+  position: relative;
+  min-width: 0;
+  min-height: 720px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 229, 178, 0.16);
+  border-radius: 18px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--factory), transparent 78%), transparent 30%),
+    linear-gradient(180deg, rgba(30, 42, 22, 0.94), rgba(11, 18, 8, 0.96));
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 244, 207, 0.07);
+}
+
+.rg-factory-backdrop {
+  position: absolute;
+  inset: 0;
+  opacity: 0.7;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0 9%, rgba(255, 229, 178, 0.055) 9% 9.4%, transparent 9.4% 22%),
+    linear-gradient(0deg, transparent 0 14%, rgba(255, 229, 178, 0.04) 14% 14.4%, transparent 14.4% 28%);
+}
+
+.rg-factory-backdrop span {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border: 1px solid rgba(255, 229, 178, 0.08);
+  border-radius: 50%;
+  box-shadow: inset 0 0 30px rgba(214, 255, 98, 0.05);
+  animation: rg-gear 24s linear infinite;
+}
+
+.rg-factory-backdrop span:nth-child(1) {
+  left: 5%;
+  top: 16%;
+}
+
+.rg-factory-backdrop span:nth-child(2) {
+  right: 6%;
+  top: 10%;
+  width: 220px;
+  height: 220px;
+  animation-duration: 32s;
+  animation-direction: reverse;
+}
+
+.rg-factory-backdrop span:nth-child(3) {
+  left: 16%;
+  bottom: 8%;
+  width: 210px;
+  height: 210px;
+  animation-duration: 36s;
+}
+
+.rg-factory-backdrop span:nth-child(4) {
+  right: 16%;
+  bottom: 16%;
+  width: 130px;
+  height: 130px;
+  animation-duration: 20s;
+  animation-direction: reverse;
+}
+
+@keyframes rg-gear {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rg-factory-banner,
+.rg-factory-machine,
+.rg-factory-machines {
+  position: relative;
+  z-index: 1;
+}
+
+.rg-factory-banner {
+  max-width: 740px;
+}
+
+.rg-factory-banner h2 {
+  margin: 6px 0 6px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(42px, 6vw, 76px);
+  line-height: 0.95;
+}
+
+.rg-factory-banner p:last-child {
+  margin: 0;
+  max-width: 640px;
+  color: #e9dfbf;
+  line-height: 1.55;
+}
+
+.rg-factory-machine {
+  min-height: 430px;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(130px, 0.75fr) minmax(260px, 1.3fr) minmax(210px, 0.95fr) minmax(130px, 0.72fr);
+  gap: 14px;
+  align-items: center;
+  margin-top: 22px;
+}
+
+.rg-intake,
+.rg-output-chute,
+.rg-core-machine {
+  min-width: 0;
+  border: 1px solid rgba(255, 229, 178, 0.16);
+  background:
+    linear-gradient(180deg, rgba(91, 53, 31, 0.58), rgba(19, 27, 14, 0.72));
+  box-shadow: inset 0 1px 0 rgba(255, 244, 207, 0.08), 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.rg-intake,
+.rg-output-chute {
+  min-height: 160px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.rg-intake span,
+.rg-output-chute span {
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rg-intake strong,
+.rg-output-chute strong {
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.rg-intake small,
+.rg-output-chute small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.rg-conveyor {
+  position: relative;
+  min-width: 0;
+  min-height: 220px;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.rg-conveyor::before,
+.rg-conveyor::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16px;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(90deg, #8a6a3a 0 18px, #5b351f 18px 36px);
+  box-shadow: 0 0 0 1px rgba(255, 229, 178, 0.12), 0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+.rg-conveyor::before {
+  top: 34px;
+}
+
+.rg-conveyor::after {
+  bottom: 34px;
+}
+
+.rg-package {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 360px);
+  min-height: 66px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--factory), #fff2d1 18%);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b351f, #7a3a22);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 244, 207, 0.08);
+  animation: rg-package 2.8s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.rg-package b,
+.rg-package small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rg-package b {
+  color: #fff2d1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.rg-package small {
+  color: #d8ca9d;
+}
+
+@keyframes rg-package {
+  0%, 100% {
+    transform: translateX(-8px);
+  }
+  50% {
+    transform: translateX(18px);
+  }
+}
+
+.rg-core-machine {
+  min-height: 310px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--factory), transparent 45%), transparent 34%),
+    linear-gradient(180deg, #2d3d22, #11190d);
+}
+
+.rg-core-machine::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px dashed color-mix(in srgb, var(--factory), #fff2d1 20%);
+  border-radius: 22px;
+  opacity: 0.5;
+}
+
+.rg-core-dial {
+  width: 150px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 10px solid rgba(11, 18, 8, 0.72);
+  color: #171006;
+  background: radial-gradient(circle, #fff2d1 0 24%, var(--factory) 25% 58%, #5b351f 59% 100%);
+  box-shadow: 0 0 50px color-mix(in srgb, var(--factory), transparent 62%);
+  animation: rg-core-pulse 2.6s ease-in-out infinite;
+}
+
+.rg-core-dial span {
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.rg-machine-face {
+  position: relative;
+  z-index: 1;
+  min-width: 190px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  text-align: center;
+  background: rgba(9, 15, 6, 0.82);
+}
+
+.rg-machine-face strong {
+  display: block;
+  color: #fff2d1;
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+
+.rg-machine-face small {
+  color: var(--muted);
+}
+
+@keyframes rg-core-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(0.95);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: brightness(1.16);
+  }
+}
+
+.rg-factory-stage.is-live .rg-core-dial {
+  animation-duration: 1.2s;
+}
+
+.rg-factory-machines {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.rg-mini-machine {
+  min-width: 0;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "light title"
+    "light meta";
+  column-gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(255, 229, 178, 0.12);
+  border-radius: 12px;
+  background: rgba(9, 15, 6, 0.5);
+}
+
+.rg-mini-machine.is-active {
+  border-color: color-mix(in srgb, var(--machine), #fff2d1 18%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--machine), transparent 82%), rgba(9, 15, 6, 0.66));
+}
+
+.rg-mini-machine span {
+  grid-area: light;
+  width: 12px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--machine);
+  box-shadow: 0 0 26px var(--machine);
+}
+
+.rg-mini-machine strong {
+  grid-area: title;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rg-mini-machine small {
+  grid-area: meta;
+  min-width: 0;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rg-panel {
@@ -687,6 +1080,7 @@ button {
 .rg-command-row {
   display: grid;
   grid-template-columns: 1fr auto;
+  min-width: 0;
   gap: 10px;
   padding: 12px;
 }
@@ -700,7 +1094,7 @@ button {
   color: #fff2d1;
   background: rgba(9, 15, 6, 0.94);
   padding: 14px;
-  font-size: 13px;
+  font-size: 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
@@ -711,7 +1105,7 @@ button {
   gap: 8px;
   border: 0;
   border-radius: 10px;
-  padding: 0 18px;
+  padding: 0 15px;
   color: #171006;
   background: linear-gradient(135deg, var(--cyan), #f1c16d);
   font-weight: 900;
@@ -1174,21 +1568,41 @@ button {
 }
 
 @media (max-width: 1180px) {
-  .rg-app {
-    grid-template-columns: 1fr;
-  }
-
   .rg-left {
     position: relative;
     height: 760px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
+
+  .rg-topbar {
+    grid-template-columns: minmax(220px, 1fr) minmax(260px, 0.9fr);
+  }
+
+  .rg-topbar .rg-tabs,
+  .rg-topbar .rg-player {
+    min-width: 0;
+  }
+
+  .rg-factory-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "stage"
+      "command"
+      "map"
+      "keys"
+      "history";
+  }
+
+  .rg-factory-stage {
+    min-height: 620px;
+  }
 }
 
 @media (max-width: 860px) {
   .rg-header,
-  .rg-layout {
+  .rg-layout,
+  .rg-factory-machine {
     grid-template-columns: 1fr;
   }
 
@@ -1198,6 +1612,28 @@ button {
       "map"
       "keys"
       "history";
+  }
+
+  .rg-topbar {
+    position: relative;
+    grid-template-columns: 1fr;
+  }
+
+  .rg-factory-stage {
+    min-height: 0;
+  }
+
+  .rg-factory-machine {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .rg-conveyor {
+    min-height: 180px;
+  }
+
+  .rg-factory-machines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .rg-tabs,
@@ -1221,6 +1657,47 @@ button {
 
   .rg-header h2 {
     font-size: 38px;
+  }
+
+  .rg-brand h1 {
+    font-size: 24px;
+  }
+
+  .rg-scoreboard {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rg-scoreboard div {
+    padding: 10px;
+  }
+
+  .rg-scoreboard strong {
+    font-size: 20px;
+  }
+
+  .rg-factory-stage {
+    padding: 12px;
+  }
+
+  .rg-factory-machine > *,
+  .rg-package,
+  .rg-core-machine {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .rg-conveyor {
+    padding-left: 0;
+    padding-right: 0;
+    overflow: hidden;
+  }
+
+  .rg-factory-banner h2 {
+    font-size: 38px;
+  }
+
+  .rg-factory-machines {
+    grid-template-columns: 1fr;
   }
 
   .rg-tabs,

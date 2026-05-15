@@ -1579,6 +1579,101 @@ function RedisWorld(props) {
   );
 }
 
+const FACTORY_COPY = {
+  strings: ["String Bins", "Store exact key/value parts in memory bins"],
+  ttl: ["Expiry Furnace", "Attach timers so temporary keys burn down"],
+  lists: ["Queue Belt", "Push and pop ordered jobs through the belt"],
+  sets: ["Uniqueness Gate", "Let one copy of each member through"],
+  hashes: ["Object Press", "Pack many fields under one Redis key"],
+  zsets: ["Score Elevator", "Lift members by score for ranking"],
+  streams: ["Event River", "Append event capsules to an ordered log"],
+  pubsub: ["Broadcast Horn", "Send live messages to subscribers"],
+  hll: ["Cardinality Meter", "Estimate unique visitors with tiny memory"],
+  bitmaps: ["Bit Panel", "Flip compact yes/no positions"],
+  geo: ["Map Table", "Store places as indexed coordinates"],
+  scripting: ["Lua Reactor", "Run atomic server-side logic"],
+  ops: ["Control Desk", "Inspect Redis state and safety signals"],
+};
+
+function factoryItems(model) {
+  if (model.op === "MSET" && model.pairs.length) {
+    return model.pairs.slice(0, 4).map(([key, value]) => ({ key, value }));
+  }
+  if ((model.op === "HSET" || model.op === "ZADD") && model.pairs.length) {
+    return model.pairs.slice(0, 4).map(([key, value]) => ({ key, value }));
+  }
+  const args = model.args.slice(0, 4);
+  if (args.length >= 2) return [{ key: args[0], value: args.slice(1).join(" ") }];
+  if (args.length === 1) return [{ key: args[0], value: model.result }];
+  return [{ key: model.key, value: model.value }];
+}
+
+function FactorySimulator({ module, completed, keys = [], history = [], command, pulse }) {
+  const latestTrace = history[0];
+  const model = stageModel(command, latestTrace);
+  const district = CITY_DISTRICTS[model.type] || CITY_DISTRICTS.ops;
+  const [machineTitle, machineCopy] = FACTORY_COPY[model.type] || FACTORY_COPY.ops;
+  const items = factoryItems(model);
+  const isLive = Boolean(pulse);
+
+  return (
+    <section className={`rg-factory-stage rg-factory-${model.type} ${isLive ? "is-live" : ""}`} style={{ "--factory": district.color }}>
+      <div className="rg-factory-backdrop">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <div className="rg-factory-banner">
+        <p className="rg-eyebrow"><Activity size={14} /> live redis factory</p>
+        <h2>{machineTitle}</h2>
+        <p>{machineCopy}</p>
+      </div>
+
+      <div className="rg-factory-machine">
+        <div className="rg-intake">
+          <span>Command intake</span>
+          <strong>{model.op}</strong>
+          <small>{normalizeCommand(command) || "type a command"}</small>
+        </div>
+
+        <div className="rg-conveyor" aria-label="Command data flow">
+          {items.map((item, index) => (
+            <div className="rg-package" key={`${item.key}-${index}`} style={{ "--delay": `${index * 180}ms` }}>
+              <b>{item.key}</b>
+              <small>{item.value}</small>
+            </div>
+          ))}
+        </div>
+
+        <div className="rg-core-machine">
+          <div className="rg-core-dial">
+            <span>{model.type.toUpperCase()}</span>
+          </div>
+          <div className="rg-machine-face">
+            <strong>{model.result}</strong>
+            <small>Redis response</small>
+          </div>
+        </div>
+
+        <div className="rg-output-chute">
+          <span>Keyspace output</span>
+          <strong>{keys.length}</strong>
+          <small>{completed.size}/{MODULES.length} modules cleared</small>
+        </div>
+      </div>
+
+      <div className="rg-factory-machines">
+        {MODULES.slice(0, 8).map((item) => (
+          <div key={item.id} className={`rg-mini-machine ${item.id === module.id ? "is-active" : ""}`} style={{ "--machine": item.color }}>
+            <span></span>
+            <strong>{item.title}</strong>
+            <small>{item.commands.slice(0, 3).join(" · ")}</small>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function RedisGame() {
   const [player, setPlayer] = useState("nova");
   const [active, setActive] = useState(0);
@@ -1651,26 +1746,13 @@ export default function RedisGame() {
 
   return (
     <div className="rg-app">
-      <aside className="rg-left">
+      <header className="rg-topbar">
         <div className="rg-brand">
           <span><Database size={20} /></span>
           <div>
-            <h1>Redis Forest</h1>
-            <p>Escape-room Redis simulator</p>
+            <h1>Redis Factory</h1>
+            <p>Playable Redis systems simulator</p>
           </div>
-        </div>
-
-        <div className="rg-premium-ribbon">
-          <span>Cache stumps</span>
-          <span>TTL traps</span>
-          <span>Log queues</span>
-          <span>Thorn sets</span>
-          <span>Event river</span>
-          <span>Boss interview</span>
-        </div>
-
-        <div className="rg-world-shell">
-          <RedisWorld activeIndex={active} completed={completed} pulse={pulse} keys={keys} latestTrace={history[0]} command={command} />
         </div>
 
         <div className="rg-scoreboard">
@@ -1679,40 +1761,52 @@ export default function RedisGame() {
           <div><strong>{keys.length}</strong><span>Keys</span></div>
         </div>
 
+        <div className="rg-tabs">
+          {[
+            ["play", "Play", GamepadIcon],
+            ["academy", "Academy", GraduationCap],
+            ["interview", "Interview", Brain],
+            ["ops", "Ops", Gauge],
+          ].map(([id, label, Icon]) => (
+            <button key={id} className={tab === id ? "is-active" : ""} onClick={() => setTab(id)}>
+              <Icon size={16} /> {label}
+            </button>
+          ))}
+        </div>
+
         <div className="rg-player">
           <KeyRound size={16} />
           <input value={player} onChange={(e) => setPlayer(e.target.value)} aria-label="Player" />
           <button onClick={resetGame} title="Reset lab"><RotateCcw size={16} /></button>
         </div>
-      </aside>
+      </header>
 
       <main className="rg-main">
         <header className="rg-header">
           <div>
-            <p className="rg-eyebrow"><Sparkles size={14} /> Redis mastery campaign</p>
+            <p className="rg-eyebrow"><Sparkles size={14} /> Redis factory campaign</p>
             <h2><span>{module.region}</span></h2>
-            <p>{module.title}: play commands, watch the forest react, then read why Redis returned that exact output.</p>
-          </div>
-          <div className="rg-tabs">
-            {[
-              ["play", "Play", GamepadIcon],
-              ["academy", "Academy", GraduationCap],
-              ["interview", "Interview", Brain],
-              ["ops", "Ops", Gauge],
-            ].map(([id, label, Icon]) => (
-              <button key={id} className={tab === id ? "is-active" : ""} onClick={() => setTab(id)}>
-                <Icon size={16} /> {label}
-              </button>
-            ))}
+            <p>{module.title}: run a real Redis command, watch the factory route the data, then read why Redis returned that output.</p>
           </div>
         </header>
 
+        <div className="rg-premium-ribbon">
+          <span>String bins</span>
+          <span>Expiry furnace</span>
+          <span>Queue belt</span>
+          <span>Uniqueness gate</span>
+          <span>Score elevator</span>
+          <span>Event river</span>
+        </div>
+
         {tab === "play" ? (
-          <section className="rg-layout">
+          <section className="rg-factory-layout">
+            <FactorySimulator module={module} completed={completed} keys={keys} history={history} command={command} pulse={pulse} />
+
             <div className="rg-panel rg-command-panel">
               <div className="rg-panel-head">
                 <div>
-                  <p className="rg-eyebrow"><Terminal size={14} /> real redis terminal</p>
+                  <p className="rg-eyebrow"><Terminal size={14} /> operator console</p>
                   <h3>{module.title}</h3>
                 </div>
                 <span className="rg-pill" style={{ borderColor: module.color, color: module.color }}>{module.level}</span>
@@ -1778,7 +1872,7 @@ export default function RedisGame() {
             </div>
 
             <div className="rg-panel rg-side-panel">
-              <div className="rg-panel-title"><Layers3 size={16} /> Curriculum map</div>
+              <div className="rg-panel-title"><Layers3 size={16} /> Factory modules</div>
               <div className="rg-modules">
                 {MODULES.map((item, index) => (
                   <button key={item.id} className={index === active ? "is-active" : ""} onClick={() => selectModule(index)}>
@@ -1793,7 +1887,7 @@ export default function RedisGame() {
             </div>
 
             <div className="rg-panel rg-keys-panel">
-              <div className="rg-panel-title"><ShieldCheck size={16} /> Live keyspace</div>
+              <div className="rg-panel-title"><ShieldCheck size={16} /> Warehouse inventory</div>
               <p className="rg-muted">Scoped prefix: <code>redisgame:{player}:</code></p>
               <div className="rg-key-list">
                 {keys.length === 0 ? <span className="rg-muted">Run a command to create keys.</span> : keys.map((item) => (
@@ -1806,7 +1900,7 @@ export default function RedisGame() {
             </div>
 
             <div className="rg-panel rg-history">
-              <div className="rg-panel-title"><Activity size={16} /> Execution trace</div>
+              <div className="rg-panel-title"><Activity size={16} /> Machine trace</div>
               {history.length === 0 ? (
                 <div className="rg-empty"><Zap size={16} /> Execute the suggested command to start the trace.</div>
               ) : history.map((item, index) => (
