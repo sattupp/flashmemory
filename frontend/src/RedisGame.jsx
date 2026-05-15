@@ -1179,10 +1179,10 @@ function KeyCard({ x, y = 0.65, z = 0, label, value, color, delay = 0 }) {
         <boxGeometry args={[1.22, 0.64, 0.12]} />
         <meshStandardMaterial color="#161a10" metalness={0.22} roughness={0.24} emissive={color} emissiveIntensity={0.12} />
       </mesh>
-      <Text position={[0, 0.14, 0.08]} fontSize={0.105} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={1.0}>
+      <Text position={[0, 0.14, 0.08]} fontSize={0.085} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={0.96}>
         {label}
       </Text>
-      <Text position={[0, -0.14, 0.08]} fontSize={0.09} color={color} anchorX="center" anchorY="middle" maxWidth={1.0}>
+      <Text position={[0, -0.14, 0.08]} fontSize={0.075} color={color} anchorX="center" anchorY="middle" maxWidth={0.96}>
         {value}
       </Text>
     </group>
