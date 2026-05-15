@@ -21,7 +21,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { Fragment, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import "./RedisGame.css";
 
 const API = import.meta?.env?.VITE_API_BASE || "http://localhost:8080/api";
@@ -1070,378 +1070,344 @@ function classifyKey(item) {
   return "ops";
 }
 
-function commandEffect(trace, fallbackCommand, pulse) {
-  const command = trace?.command || fallbackCommand;
-  const parts = splitCommand(command);
+function stageModel(command = "", trace) {
+  const parts = splitCommand(trace?.command || command);
   const op = parts[0]?.toUpperCase() || "READY";
-  const id = COMMAND_DISTRICT[op] || "ops";
-  const district = CITY_DISTRICTS[id];
-  const labels = op === "MSET"
-    ? parts.slice(1).filter((_, index) => index % 2 === 0)
-    : op === "XADD"
-      ? [parts[1], "event"]
-      : parts.slice(1, Math.min(parts.length, 4));
-  return { op, id, at: pulse || Date.now(), color: district.color, labels: labels.length ? labels : [district.label] };
+  const type = COMMAND_DISTRICT[op] || "ops";
+  const pairs = [];
+  if (op === "MSET" || op === "HSET" || op === "ZADD") {
+    const start = op === "HSET" ? 2 : 1;
+    const step = 2;
+    for (let i = start; i < parts.length - 1; i += step) pairs.push([parts[i], parts[i + 1]]);
+  }
+  return {
+    op,
+    type,
+    key: parts[1] || "key",
+    value: parts[2] || "value",
+    args: parts.slice(1),
+    pairs,
+    result: trace?.response?.ok ? pretty(trace.response.result) : trace?.response?.result ? pretty(trace.response.result) : "ready",
+  };
 }
 
-function CityDistrict({ id, district, active, count }) {
-  const group = useRef();
-  useFrame((_, delta) => {
-    if (group.current && active) group.current.rotation.y += delta * 0.18;
-  });
-
-  const baseHeight = id === "zsets" ? 1.2 : id === "pubsub" ? 1.45 : id === "ttl" ? 0.92 : 0.56;
-
+function StageLabel({ title, subtitle, color = "#d6ff62" }) {
   return (
-    <group ref={group} position={district.position}>
-      <mesh position={[0, 0.03, 0]}>
-        <cylinderGeometry args={[0.78, 0.92, 0.08, 6]} />
-        <meshStandardMaterial color="#13170f" roughness={0.45} metalness={0.18} emissive={district.color} emissiveIntensity={active ? 0.16 : 0.04} />
-      </mesh>
-
-      {id === "lists" ? (
-        <>
-          <mesh position={[0, 0.32, 0]}>
-            <boxGeometry args={[1.48, 0.16, 0.42]} />
-            <meshStandardMaterial color="#1b2212" emissive={district.color} emissiveIntensity={0.13} />
-          </mesh>
-          {[0, 1, 2].map((n) => (
-            <Float key={n} speed={1.4 + n * 0.25} floatIntensity={0.16}>
-              <mesh position={[-0.52 + n * 0.5, 0.52, 0]}>
-                <boxGeometry args={[0.26, 0.2, 0.24]} />
-                <meshStandardMaterial color={district.color} roughness={0.28} metalness={0.25} emissive={district.color} emissiveIntensity={0.22} />
-              </mesh>
-            </Float>
-          ))}
-        </>
-      ) : id === "sets" ? (
-        <>
-          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.43, 0]}>
-            <torusGeometry args={[0.55, 0.025, 8, 80]} />
-            <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.42} />
-          </mesh>
-          {[0, 1, 2, 3].map((n) => {
-            const angle = (n / 4) * Math.PI * 2;
-            return (
-              <mesh key={n} position={[Math.cos(angle) * 0.36, 0.48, Math.sin(angle) * 0.36]}>
-                <sphereGeometry args={[0.08, 16, 16]} />
-                <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.24} />
-              </mesh>
-            );
-          })}
-        </>
-      ) : id === "zsets" ? (
-        [0, 1, 2, 3].map((n) => (
-          <mesh key={n} position={[-0.33 + n * 0.22, 0.22 + n * 0.16, 0]}>
-            <boxGeometry args={[0.16, 0.34 + n * 0.24, 0.28]} />
-            <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.18 + n * 0.04} />
-          </mesh>
-        ))
-      ) : id === "streams" ? (
-        <>
-          <mesh position={[0, 0.25, 0]} rotation={[0, 0.2, 0]}>
-            <boxGeometry args={[1.55, 0.06, 0.32]} />
-            <meshStandardMaterial color="#123325" emissive={district.color} emissiveIntensity={0.24} transparent opacity={0.78} />
-          </mesh>
-          {[0, 1, 2].map((n) => (
-            <Float key={n} speed={2 + n * 0.3} floatIntensity={0.08}>
-              <mesh position={[-0.54 + n * 0.44, 0.4, 0.03]}>
-                <capsuleGeometry args={[0.07, 0.22, 6, 12]} />
-                <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.36} />
-              </mesh>
-            </Float>
-          ))}
-        </>
-      ) : id === "bitmaps" ? (
-        Array.from({ length: 20 }).map((_, n) => (
-          <mesh key={n} position={[-0.45 + (n % 5) * 0.22, 0.25 + Math.floor(n / 5) * 0.08, -0.18 + Math.floor(n / 5) * 0.12]}>
-            <boxGeometry args={[0.13, 0.035, 0.09]} />
-            <meshStandardMaterial color={n % 3 === 0 ? district.color : "#28301f"} emissive={district.color} emissiveIntensity={n % 3 === 0 ? 0.22 : 0.02} />
-          </mesh>
-        ))
-      ) : id === "geo" ? (
-        <>
-          <mesh position={[0, 0.2, 0]}>
-            <boxGeometry args={[1.18, 0.05, 0.78]} />
-            <meshStandardMaterial color="#101a14" emissive={district.color} emissiveIntensity={0.1} />
-          </mesh>
-          {[-0.32, 0.18, 0.42].map((x, n) => (
-            <mesh key={x} position={[x, 0.42 + n * 0.06, -0.22 + n * 0.19]}>
-              <coneGeometry args={[0.08, 0.34, 18]} />
-              <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.32} />
-            </mesh>
-          ))}
-        </>
-      ) : id === "hll" ? (
-        <>
-          <mesh position={[0, 0.45, 0]}>
-            <sphereGeometry args={[0.42, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color="#1f2a13" emissive={district.color} emissiveIntensity={0.18} transparent opacity={0.86} />
-          </mesh>
-          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.48, 0]}>
-            <torusGeometry args={[0.45, 0.012, 8, 80]} />
-            <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.32} />
-          </mesh>
-        </>
-      ) : (
-        <mesh position={[0, baseHeight / 2, 0]}>
-          <boxGeometry args={id === "pubsub" ? [0.34, baseHeight, 0.34] : [0.68, baseHeight, 0.58]} />
-          <meshStandardMaterial color={id === "strings" ? "#24150f" : "#171a13"} roughness={0.32} metalness={0.22} emissive={district.color} emissiveIntensity={active ? 0.26 : 0.09} />
-        </mesh>
-      )}
-
-      {active ? (
-        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.12, 0]}>
-          <torusGeometry args={[1.02, 0.012, 8, 96]} />
-          <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.54} transparent opacity={0.84} />
-        </mesh>
-      ) : null}
-
-      <Text position={[0, -0.12, 0.82]} fontSize={0.105} color="#f8f3e7" anchorX="center" anchorY="middle">
-        {district.label}
+    <group position={[0, 2.05, -1.8]}>
+      <Text fontSize={0.34} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={5.8}>
+        {title}
       </Text>
-      <Text position={[0, -0.28, 0.82]} fontSize={0.075} color={district.color} anchorX="center" anchorY="middle">
-        {count} live key{count === 1 ? "" : "s"}
+      <Text position={[0, -0.38, 0]} fontSize={0.13} color={color} anchorX="center" anchorY="middle" maxWidth={5.4}>
+        {subtitle}
       </Text>
     </group>
   );
 }
 
-function CommandPacket({ effect }) {
-  const packet = useRef();
-  const target = CITY_DISTRICTS[effect.id]?.position || [0, 0, 0];
+function ResultBadge({ result, color }) {
+  return (
+    <group position={[2.65, 1.35, 0.25]}>
+      <mesh>
+        <boxGeometry args={[1.18, 0.5, 0.12]} />
+        <meshStandardMaterial color="#11140d" metalness={0.24} roughness={0.22} emissive={color} emissiveIntensity={0.14} />
+      </mesh>
+      <Text position={[0, 0.04, 0.08]} fontSize={0.16} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={1.0}>
+        {result}
+      </Text>
+      <Text position={[0, -0.19, 0.08]} fontSize={0.06} color={color} anchorX="center" anchorY="middle">
+        RESULT
+      </Text>
+    </group>
+  );
+}
 
+function FlyingCommand({ model, color, pulse }) {
+  const packet = useRef();
   useFrame(() => {
     if (!packet.current) return;
-    const age = Math.min((Date.now() - effect.at) / 1400, 1);
+    const age = Math.min((Date.now() - (pulse || Date.now())) / 1200, 1);
     const ease = 1 - Math.pow(1 - age, 3);
-    packet.current.position.set(-4.9 + (target[0] + 4.9) * ease, 0.7 + Math.sin(ease * Math.PI) * 1.2, -4.55 + (target[2] + 4.55) * ease);
-    packet.current.rotation.x += 0.035;
-    packet.current.rotation.y += 0.055;
-    packet.current.scale.setScalar(1 + Math.sin(age * Math.PI) * 0.3);
+    packet.current.position.set(-3.2 + 3.2 * ease, 0.4 + Math.sin(ease * Math.PI) * 0.95, 1.3 - 1.3 * ease);
+    packet.current.rotation.y += 0.04;
   });
-
   return (
     <group ref={packet}>
       <mesh>
-        <boxGeometry args={[0.22, 0.22, 0.22]} />
-        <meshStandardMaterial color={effect.color} metalness={0.42} roughness={0.18} emissive={effect.color} emissiveIntensity={0.44} />
+        <boxGeometry args={[0.4, 0.28, 0.22]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.36} metalness={0.35} roughness={0.2} />
       </mesh>
-      <Text position={[0, 0.33, 0]} fontSize={0.115} color="#fff8e8" anchorX="center" anchorY="middle">
-        {effect.op}
+      <Text position={[0, 0.3, 0]} fontSize={0.11} color="#fff7e7" anchorX="center" anchorY="middle">
+        {model.op}
       </Text>
     </group>
   );
 }
 
-function KeyMarkers({ keys }) {
+function KeyCard({ x, y = 0.65, z = 0, label, value, color, delay = 0 }) {
+  const card = useRef();
+  useFrame(() => {
+    if (!card.current) return;
+    card.current.position.y = y + Math.sin(Date.now() * 0.002 + delay) * 0.035;
+  });
   return (
-    <>
-      {keys.slice(0, 18).map((item, index) => {
-        const id = classifyKey(item);
-        const district = CITY_DISTRICTS[id] || CITY_DISTRICTS.ops;
-        const offset = (index % 5) - 2;
-        const row = Math.floor(index / 5);
+    <group ref={card} position={[x, y, z]}>
+      <mesh>
+        <boxGeometry args={[1.22, 0.64, 0.12]} />
+        <meshStandardMaterial color="#161a10" metalness={0.22} roughness={0.24} emissive={color} emissiveIntensity={0.12} />
+      </mesh>
+      <Text position={[0, 0.14, 0.08]} fontSize={0.105} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={1.0}>
+        {label}
+      </Text>
+      <Text position={[0, -0.14, 0.08]} fontSize={0.09} color={color} anchorX="center" anchorY="middle" maxWidth={1.0}>
+        {value}
+      </Text>
+    </group>
+  );
+}
+
+function StringStage({ model, color }) {
+  const cards = model.op === "MSET" && model.pairs.length ? model.pairs.slice(0, 3) : [[model.key, model.value]];
+  return (
+    <group>
+      <StageLabel title={`${model.op} String Storage`} subtitle="Large key cards slide into the Redis string rack" color={color} />
+      <mesh position={[0, 0.45, -0.12]}>
+        <boxGeometry args={[3.9, 1.06, 0.22]} />
+        <meshStandardMaterial color="#24140e" roughness={0.3} metalness={0.32} emissive="#ff5f3f" emissiveIntensity={0.14} />
+      </mesh>
+      <Text position={[0, 1.12, 0.08]} fontSize={0.16} color="#fff7e7" anchorX="center" anchorY="middle">
+        STRING VAULT
+      </Text>
+      {cards.map(([label, value], index) => (
+        <KeyCard key={`${label}-${index}`} x={(index - (cards.length - 1) / 2) * 1.32} label={label} value={value} color={color} delay={index} />
+      ))}
+    </group>
+  );
+}
+
+function ListStage({ model, color }) {
+  const items = model.args.slice(1, 5);
+  return (
+    <group>
+      <StageLabel title={`${model.op} Queue Conveyor`} subtitle="List commands push, pop, trim, and inspect ordered items" color={color} />
+      <mesh position={[0, 0.45, 0]}>
+        <boxGeometry args={[4.4, 0.22, 0.65]} />
+        <meshStandardMaterial color="#17210d" emissive={color} emissiveIntensity={0.14} />
+      </mesh>
+      {[-1.45, -0.55, 0.35, 1.25].map((x, index) => (
+        <KeyCard key={x} x={x} y={0.85} label={`item ${index + 1}`} value={items[index] || ["email", "report", "sync", "alert"][index]} color={color} delay={index} />
+      ))}
+    </group>
+  );
+}
+
+function SetStage({ model, color }) {
+  const members = model.args.slice(1);
+  const hasDuplicate = new Set(members).size !== members.length && members.length > 1;
+  return (
+    <group>
+      <StageLabel title={`${model.op} Membership Gate`} subtitle="Sets keep unique members and reject duplicates" color={color} />
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.65, 0]}>
+        <torusGeometry args={[1.25, 0.045, 12, 120]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.42} />
+      </mesh>
+      {[0, 1, 2].map((n) => {
+        const angle = (n / 3) * Math.PI * 2;
+        return <KeyCard key={n} x={Math.cos(angle) * 1.05} y={0.72} z={Math.sin(angle) * 0.55} label="member" value={members[n] || ["nova", "kai", "redis"][n]} color={color} delay={n} />;
+      })}
+      {hasDuplicate ? (
+        <Text position={[0, 1.45, 0.08]} fontSize={0.17} color="#ff5f3f" anchorX="center" anchorY="middle">
+          duplicate blocked
+        </Text>
+      ) : null}
+    </group>
+  );
+}
+
+function HashStage({ model, color }) {
+  const fields = model.pairs.length ? model.pairs.slice(0, 4) : [["name", "Nova"], ["role", "engineer"], ["views", "1"]];
+  return (
+    <group>
+      <StageLabel title={`${model.op} Object Lab`} subtitle="Hashes update fields without rewriting the whole object" color={color} />
+      <mesh position={[0, 0.75, -0.08]}>
+        <boxGeometry args={[3.25, 1.6, 0.22]} />
+        <meshStandardMaterial color="#1a1510" metalness={0.24} roughness={0.28} emissive={color} emissiveIntensity={0.1} />
+      </mesh>
+      {fields.map(([field, value], index) => (
+        <KeyCard key={field} x={(index % 2) * 1.36 - 0.68} y={1.08 - Math.floor(index / 2) * 0.65} label={field} value={value} color={color} delay={index} />
+      ))}
+    </group>
+  );
+}
+
+function ZSetStage({ model, color }) {
+  const rows = model.pairs.length ? model.pairs.slice(0, 4) : [["900", "nova"], ["750", "kai"], ["620", "redis"]];
+  return (
+    <group>
+      <StageLabel title={`${model.op} Leaderboard Tower`} subtitle="Sorted sets arrange unique members by numeric score" color={color} />
+      {rows.map(([score, member], index) => (
+        <group key={`${member}-${index}`} position={[(index - 1.5) * 0.72, 0.28 + index * 0.18, 0]}>
+          <mesh>
+            <boxGeometry args={[0.48, 0.55 + index * 0.33, 0.42]} />
+            <meshStandardMaterial color="#26170e" emissive={color} emissiveIntensity={0.16 + index * 0.04} metalness={0.26} roughness={0.22} />
+          </mesh>
+          <Text position={[0, 0.42 + index * 0.18, 0.25]} fontSize={0.105} color="#fff7e7" anchorX="center" anchorY="middle">
+            {member}
+          </Text>
+          <Text position={[0, 0.2 + index * 0.18, 0.25]} fontSize={0.09} color={color} anchorX="center" anchorY="middle">
+            {score}
+          </Text>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function StreamStage({ model, color }) {
+  return (
+    <group>
+      <StageLabel title={`${model.op} Event Timeline`} subtitle="Streams append durable events with generated IDs" color={color} />
+      <mesh position={[0, 0.6, 0]}>
+        <boxGeometry args={[4.4, 0.12, 0.35]} />
+        <meshStandardMaterial color="#102417" emissive={color} emissiveIntensity={0.18} />
+      </mesh>
+      {[-1.4, -0.45, 0.5, 1.45].map((x, index) => (
+        <group key={x} position={[x, 0.92, 0]}>
+          <mesh>
+            <capsuleGeometry args={[0.16, 0.52, 8, 18]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.32} />
+          </mesh>
+          <Text position={[0, 0.42, 0]} fontSize={0.075} color="#fff7e7" anchorX="center" anchorY="middle">
+            event {index + 1}
+          </Text>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function TTLStage({ model, color }) {
+  const ring = useRef();
+  useFrame((_, delta) => {
+    if (ring.current) ring.current.rotation.z -= delta * 0.9;
+  });
+  return (
+    <group>
+      <StageLabel title={`${model.op} Expiration Clock`} subtitle="A TTL wraps a key with a countdown ring" color={color} />
+      <KeyCard x={0} y={0.78} label={model.key} value={model.value || "60s"} color={color} />
+      <mesh ref={ring} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.8, 0]}>
+        <torusGeometry args={[1.02, 0.035, 12, 120]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.56} />
+      </mesh>
+    </group>
+  );
+}
+
+function SpecialtyStage({ model, color }) {
+  const copy = {
+    hll: ["Approx Counter", "Counts unique values with tiny memory"],
+    bitmaps: ["Bit Grid", "Turns offsets into compact yes/no flags"],
+    geo: ["Geo Map", "Stores longitude/latitude members"],
+    scripting: ["Lua Forge", "Runs small atomic server-side logic"],
+    ops: ["Ops Radar", "Inspects keys, types, memory, and server state"],
+    pubsub: ["Signal Tower", "Broadcasts to active subscribers"],
+  }[model.type] || ["Redis Stage", "Command visualization"];
+  return (
+    <group>
+      <StageLabel title={`${model.op} ${copy[0]}`} subtitle={copy[1]} color={color} />
+      <mesh position={[0, 0.75, 0]}>
+        <icosahedronGeometry args={[0.9, 1]} />
+        <meshStandardMaterial color="#171a10" metalness={0.36} roughness={0.2} emissive={color} emissiveIntensity={0.28} />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.75, 0]}>
+        <torusGeometry args={[1.25, 0.02, 8, 120]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
+      </mesh>
+      <Text position={[0, 0.72, 0.95]} fontSize={0.16} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={2.2}>
+        {model.args.join(" ") || copy[0]}
+      </Text>
+    </group>
+  );
+}
+
+function MiniKeyStrip({ keys }) {
+  return (
+    <group position={[0, -0.03, 1.9]}>
+      <Text position={[0, 0.38, 0]} fontSize={0.08} color="#aaa88f" anchorX="center" anchorY="middle">
+        LIVE KEYSPACE
+      </Text>
+      {keys.slice(0, 8).map((item, index) => {
+        const color = CITY_DISTRICTS[classifyKey(item)]?.color || "#d6ff62";
         return (
-          <group key={`${item.key}-${index}`} position={[district.position[0] + offset * 0.18, 0.92 + row * 0.16, district.position[2] - 0.62]}>
+          <group key={`${item.key}-${index}`} position={[(index - 3.5) * 0.48, 0.08, 0]}>
             <mesh>
-              <boxGeometry args={[0.12, 0.12, 0.12]} />
-              <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.28} />
+              <boxGeometry args={[0.38, 0.14, 0.12]} />
+              <meshStandardMaterial color="#12160d" emissive={color} emissiveIntensity={0.18} />
             </mesh>
-            {index < 10 ? (
-              <Text position={[0, 0.18, 0]} fontSize={0.055} color="#f8f3e7" anchorX="center" anchorY="middle">
-                {item.key.length > 12 ? `${item.key.slice(0, 11)}...` : item.key}
-              </Text>
-            ) : null}
+            <Text position={[0, 0.13, 0.08]} fontSize={0.04} color="#fff7e7" anchorX="center" anchorY="middle" maxWidth={0.34}>
+              {item.key}
+            </Text>
           </group>
         );
       })}
-    </>
+    </group>
   );
 }
 
-function RedisDataCity({ activeIndex, completed, pulse, keys = [], latestTrace, command }) {
-  const city = useRef();
-  const active = MODULES[activeIndex];
-  const effect = useMemo(() => commandEffect(latestTrace, command, pulse), [latestTrace, command, pulse]);
-  const counts = useMemo(() => {
-    const next = Object.fromEntries(Object.keys(CITY_DISTRICTS).map((id) => [id, 0]));
-    keys.forEach((item) => {
-      const id = classifyKey(item);
-      next[id] = (next[id] || 0) + 1;
-    });
-    return next;
-  }, [keys]);
+function CommandStageScene({ activeIndex, completed, pulse, keys = [], latestTrace, command }) {
+  const model = useMemo(() => stageModel(command, latestTrace), [command, latestTrace]);
+  const district = CITY_DISTRICTS[model.type] || CITY_DISTRICTS.ops;
+  const stage = useRef();
 
   useFrame(() => {
-    if (city.current) city.current.rotation.y = Math.sin(Date.now() * 0.00022) * 0.08;
+    if (stage.current) stage.current.rotation.y = Math.sin(Date.now() * 0.00018) * 0.045;
   });
 
   return (
     <>
-      <color attach="background" args={["#090b07"]} />
-      <fog attach="fog" args={["#090b07", 7.5, 17]} />
-      <ambientLight intensity={0.62} />
-      <directionalLight position={[2.8, 8, 4]} intensity={2.35} color="#fff0ce" />
-      <pointLight position={[-4.8, 2.2, -4.5]} color="#d6ff62" intensity={3.2} />
-      <pointLight position={[4.2, 2.4, 2.8]} color="#ff8a4c" intensity={2.6} />
-      <pointLight position={[0, 3.8, 0]} color={effect.color} intensity={3.4} />
-      <Stars radius={24} depth={8} count={800} factor={2.1} saturation={0.1} fade speed={0.35} />
-      <SparkleField count={46} scale={[8, 3.4, 8]} size={1.6} speed={0.16} color="#d6ff62" opacity={0.28} />
+      <color attach="background" args={["#080a06"]} />
+      <fog attach="fog" args={["#080a06", 7, 15]} />
+      <ambientLight intensity={0.72} />
+      <directionalLight position={[3, 6, 4]} intensity={2.25} color="#fff0ce" />
+      <pointLight position={[-2.8, 2.4, 2.8]} color="#d6ff62" intensity={2.4} />
+      <pointLight position={[2.8, 2.2, -1.8]} color={district.color} intensity={3.2} />
+      <SparkleField count={28} scale={[5, 2.5, 4]} size={1.2} speed={0.12} color={district.color} opacity={0.18} />
 
-      <group ref={city}>
-        <mesh position={[0, -0.03, 0]}>
-          <boxGeometry args={[9.2, 0.06, 9.2]} />
-          <meshStandardMaterial color="#0d110a" roughness={0.6} metalness={0.18} />
+      <group ref={stage}>
+        <mesh position={[0, -0.08, 0]}>
+          <boxGeometry args={[5.8, 0.08, 4.35]} />
+          <meshStandardMaterial color="#10130b" roughness={0.52} metalness={0.18} />
         </mesh>
-        {[-3, -1.5, 0, 1.5, 3].map((line) => (
-          <Fragment key={line}>
-            <mesh position={[line, 0.015, 0]}>
-              <boxGeometry args={[0.018, 0.018, 8.4]} />
-              <meshStandardMaterial color="#242b18" emissive="#d6ff62" emissiveIntensity={0.035} />
-            </mesh>
-            <mesh position={[0, 0.018, line]}>
-              <boxGeometry args={[8.4, 0.018, 0.018]} />
-              <meshStandardMaterial color="#2d2116" emissive="#ff8a4c" emissiveIntensity={0.035} />
-            </mesh>
-          </Fragment>
-        ))}
+        <mesh position={[0, -0.02, -1.62]}>
+          <boxGeometry args={[5.2, 0.025, 0.04]} />
+          <meshStandardMaterial color={district.color} emissive={district.color} emissiveIntensity={0.25} />
+        </mesh>
 
-        <group position={[0, 0, 0]}>
-          <mesh position={[0, 0.52, 0]}>
-            <cylinderGeometry args={[0.62, 0.78, 0.94, 8]} />
-            <meshStandardMaterial color="#2b0f0d" roughness={0.28} metalness={0.4} emissive="#ff3b2f" emissiveIntensity={0.28} />
-          </mesh>
-          <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0.54, 0]}>
-            <torusGeometry args={[0.92, 0.015, 8, 120]} />
-            <meshStandardMaterial color="#d6ff62" emissive="#d6ff62" emissiveIntensity={0.48} />
-          </mesh>
-          <Text position={[0, 1.16, 0]} fontSize={0.16} color="#fff8e8" anchorX="center" anchorY="middle">
-            REDIS CORE
-          </Text>
-        </group>
+        {model.type === "strings" ? <StringStage model={model} color={district.color} /> : null}
+        {model.type === "lists" ? <ListStage model={model} color={district.color} /> : null}
+        {model.type === "sets" ? <SetStage model={model} color={district.color} /> : null}
+        {model.type === "hashes" ? <HashStage model={model} color={district.color} /> : null}
+        {model.type === "zsets" ? <ZSetStage model={model} color={district.color} /> : null}
+        {model.type === "streams" ? <StreamStage model={model} color={district.color} /> : null}
+        {model.type === "ttl" ? <TTLStage model={model} color={district.color} /> : null}
+        {["hll", "bitmaps", "geo", "scripting", "ops", "pubsub"].includes(model.type) ? <SpecialtyStage model={model} color={district.color} /> : null}
 
-        {Object.entries(CITY_DISTRICTS).map(([id, district]) => (
-          <CityDistrict key={id} id={id} district={district} active={effect.id === id || active.id === id} count={counts[id] || 0} />
-        ))}
-
-        {keys.some((item) => item.ttl > -1) ? (
-          <mesh rotation={[Math.PI / 2, 0, 0]} position={[CITY_DISTRICTS.ttl.position[0], 0.62, CITY_DISTRICTS.ttl.position[2]]}>
-            <torusGeometry args={[0.65, 0.018, 8, 120]} />
-            <meshStandardMaterial color="#f4b24d" emissive="#f4b24d" emissiveIntensity={0.62} transparent opacity={0.82} />
-          </mesh>
-        ) : null}
-
-        <KeyMarkers keys={keys} />
-        {pulse ? <CommandPacket effect={effect} /> : null}
+        <ResultBadge result={model.result} color={district.color} />
+        {pulse ? <FlyingCommand model={model} color={district.color} pulse={pulse} /> : null}
+        <MiniKeyStrip keys={keys} />
       </group>
 
-      <Text position={[0, 2.52, -3.85]} fontSize={0.2} color="#fff8e8" anchorX="center" anchorY="middle">
-        {effect.op === "READY" ? active.region : `${effect.op} -> ${CITY_DISTRICTS[effect.id].label}`}
-      </Text>
-      <Text position={[0, 2.24, -3.85]} fontSize={0.095} color="#cbd5a1" anchorX="center" anchorY="middle">
+      <Text position={[0, -1.7, 0]} fontSize={0.09} color="#aaa88f" anchorX="center" anchorY="middle">
         {keys.length} live keys · {completed.size}/{MODULES.length} modules cleared
       </Text>
-      <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={0.75} maxPolarAngle={1.25} autoRotate autoRotateSpeed={0.12} />
-    </>
-  );
-}
-
-function RedisScene({ activeIndex, completed, pulse }) {
-  const orbit = useRef();
-  const core = useRef();
-  const aura = useRef();
-  const active = MODULES[activeIndex];
-
-  useFrame((_, delta) => {
-    if (orbit.current) orbit.current.rotation.y += delta * 0.16;
-    if (core.current) core.current.rotation.y -= delta * 0.32;
-    if (aura.current) {
-      aura.current.rotation.z += delta * 0.22;
-      aura.current.scale.setScalar(1 + Math.sin(Date.now() * 0.002) * 0.04);
-    }
-  });
-
-  return (
-    <>
-      <color attach="background" args={["#080c16"]} />
-      <fog attach="fog" args={["#080c16", 8, 17]} />
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[4, 7, 4]} intensity={2.2} />
-      <pointLight position={[-4, 3, 2]} color="#38bdf8" intensity={3.5} />
-      <pointLight position={[4, -1, 3]} color={active.color} intensity={3.6} />
-      <Stars radius={22} depth={7} count={1200} factor={2.6} saturation={0.2} fade speed={0.7} />
-      <SparkleField count={80} scale={[8, 4, 8]} size={2.2} speed={0.22} color={active.color} opacity={0.5} />
-
-      <group ref={orbit}>
-        {MODULES.map((module, index) => {
-          const angle = (index / MODULES.length) * Math.PI * 2;
-          const radius = 3.65;
-          const done = completed.has(module.id);
-          const isActive = activeIndex === index;
-          const color = done ? "#22c55e" : isActive ? module.color : "#475569";
-          return (
-            <Float key={module.id} speed={isActive ? 2.4 : 1.1} floatIntensity={isActive ? 0.75 : 0.25}>
-              <group position={[Math.cos(angle) * radius, isActive ? 0.72 : 0, Math.sin(angle) * radius]}>
-                <mesh>
-                  <dodecahedronGeometry args={[isActive ? 0.48 : 0.32, 0]} />
-                  <meshStandardMaterial color={color} metalness={0.4} roughness={0.22} emissive={color} emissiveIntensity={isActive ? 0.45 : 0.15} />
-                </mesh>
-                {isActive ? (
-                  <mesh rotation={[Math.PI / 2, 0, 0]}>
-                    <torusGeometry args={[0.72, 0.012, 8, 96]} />
-                    <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
-                  </mesh>
-                ) : null}
-                <Text position={[0, -0.58, 0]} fontSize={0.105} color="#cbd5e1" anchorX="center" anchorY="middle">
-                  {module.title}
-                </Text>
-              </group>
-            </Float>
-          );
-        })}
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[3.65, 0.018, 10, 180]} />
-          <meshStandardMaterial color="#1e293b" emissive="#0f172a" />
-        </mesh>
-      </group>
-
-      <group ref={core}>
-        <mesh>
-          <icosahedronGeometry args={[1.08, 1]} />
-          <meshStandardMaterial color="#ef4444" metalness={0.28} roughness={0.18} emissive="#7f1d1d" emissiveIntensity={0.34} />
-        </mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[1.45, 0.018, 8, 96]} />
-          <meshStandardMaterial color={active.color} emissive={active.color} emissiveIntensity={0.26} />
-        </mesh>
-      </group>
-      <group ref={aura}>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[2.05 + (pulse ? 0.06 : 0), 0.01, 8, 160]} />
-          <meshStandardMaterial color="#f8fafc" emissive={active.color} emissiveIntensity={0.42} transparent opacity={0.72} />
-        </mesh>
-        <mesh rotation={[Math.PI / 2, 0.35, 0]}>
-          <torusGeometry args={[2.42, 0.008, 8, 160]} />
-          <meshStandardMaterial color={active.color} emissive={active.color} emissiveIntensity={0.35} transparent opacity={0.52} />
-        </mesh>
-      </group>
-
-      <Text position={[0, 1.72, 0]} fontSize={0.25} color="#ffffff" anchorX="center" anchorY="middle">
-        {active.region}
-      </Text>
-      <Text position={[0, -1.55, 0]} fontSize={0.14} color="#94a3b8" anchorX="center" anchorY="middle">
-        {completed.size}/{MODULES.length} modules cleared
-      </Text>
-      <OrbitControls enablePan={false} enableZoom={false} autoRotate autoRotateSpeed={0.25} />
+      <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={0.82} maxPolarAngle={1.34} autoRotate autoRotateSpeed={0.08} />
     </>
   );
 }
 
 function RedisWorld(props) {
   return (
-    <Canvas camera={{ position: [0, 5.6, 8.2], fov: 43 }} dpr={[1, 1.7]}>
-      <RedisDataCity {...props} />
+    <Canvas camera={{ position: [0, 3.35, 6.2], fov: 38 }} dpr={[1, 1.7]}>
+      <CommandStageScene {...props} />
     </Canvas>
   );
 }
