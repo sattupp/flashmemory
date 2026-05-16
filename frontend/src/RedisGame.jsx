@@ -21,7 +21,7 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { Component, useMemo, useRef, useState } from "react";
+import { Component, useEffect, useMemo, useRef, useState } from "react";
 import "./RedisGame.css";
 
 const API = import.meta?.env?.VITE_API_BASE || "http://localhost:8080/api";
@@ -1608,7 +1608,7 @@ function factoryItems(model) {
   return [{ key: model.key, value: model.value }];
 }
 
-function FactorySimulator({ module, completed, keys = [], history = [], command, pulse }) {
+function FactorySimulator({ module, completed, keys = [], history = [], command, pulse, player }) {
   const latestTrace = history[0];
   const model = stageModel(command, latestTrace);
   const district = CITY_DISTRICTS[model.type] || CITY_DISTRICTS.ops;
@@ -1626,6 +1626,10 @@ function FactorySimulator({ module, completed, keys = [], history = [], command,
         <p className="rg-eyebrow"><Activity size={14} /> live redis factory</p>
         <h2>{machineTitle}</h2>
         <p>{machineCopy}</p>
+        <div className="rg-factory-meta">
+          <span>Operator: <strong>{player}</strong></span>
+          <span>Scope: <code>redisgame:{player}:*</code></span>
+        </div>
       </div>
 
       <div className="rg-factory-machine">
@@ -1686,6 +1690,10 @@ export default function RedisGame() {
   const [tab, setTab] = useState("play");
   const [query, setQuery] = useState("");
   const [pulse, setPulse] = useState(0);
+  const scopedPlayer = useMemo(() => {
+    const normalized = normalizeCommand(player).toLowerCase().replace(/\s+/g, "-");
+    return normalized || "nova";
+  }, [player]);
 
   const module = MODULES[active];
   const moduleDetails = TOPIC_DETAILS[module.id];
@@ -1699,6 +1707,12 @@ export default function RedisGame() {
     return COMMAND_PALETTE.filter((item) => item.toLowerCase().includes(needle));
   }, [query]);
 
+  useEffect(() => {
+    setKeys([]);
+    setHistory([]);
+    setPulse(0);
+  }, [scopedPlayer]);
+
   async function runCommand(nextCommand = command) {
     const clean = normalizeCommand(nextCommand);
     if (!clean) return;
@@ -1707,7 +1721,7 @@ export default function RedisGame() {
       const res = await fetch(`${API}/game/command`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player, command: clean }),
+        body: JSON.stringify({ player: scopedPlayer, command: clean }),
       });
       const data = await res.json();
       setPulse(Date.now());
@@ -1730,8 +1744,8 @@ export default function RedisGame() {
     await fetch(`${API}/game/reset`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player }),
-    });
+        body: JSON.stringify({ player: scopedPlayer }),
+      });
     setCompleted(new Set());
     setHistory([]);
     setKeys([]);
@@ -1801,7 +1815,7 @@ export default function RedisGame() {
 
         {tab === "play" ? (
           <section className="rg-factory-layout">
-            <FactorySimulator module={module} completed={completed} keys={keys} history={history} command={command} pulse={pulse} />
+            <FactorySimulator module={module} completed={completed} keys={keys} history={history} command={command} pulse={pulse} player={scopedPlayer} />
 
             <div className="rg-panel rg-command-panel">
               <div className="rg-panel-head">
@@ -1888,7 +1902,7 @@ export default function RedisGame() {
 
             <div className="rg-panel rg-keys-panel">
               <div className="rg-panel-title"><ShieldCheck size={16} /> Warehouse inventory</div>
-              <p className="rg-muted">Scoped prefix: <code>redisgame:{player}:</code></p>
+              <p className="rg-muted">Scoped prefix: <code>redisgame:{scopedPlayer}:</code></p>
               <div className="rg-key-list">
                 {keys.length === 0 ? <span className="rg-muted">Run a command to create keys.</span> : keys.map((item) => (
                   <div key={item.key}>

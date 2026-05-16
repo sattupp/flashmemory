@@ -553,19 +553,20 @@ button {
 .rg-factory-layout {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1.05fr) minmax(390px, 0.62fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    "stage command"
-    "stage map"
+    "stage stage"
+    "command map"
     "history keys";
   gap: 14px;
+  align-items: start;
 }
 
 .rg-factory-stage {
   grid-area: stage;
   position: relative;
   min-width: 0;
-  min-height: 720px;
+  min-height: 620px;
   overflow: hidden;
   border: 1px solid rgba(255, 229, 178, 0.16);
   border-radius: 18px;
@@ -660,11 +661,40 @@ button {
   line-height: 1.55;
 }
 
+.rg-factory-meta {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rg-factory-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 229, 178, 0.16);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(9, 15, 6, 0.55);
+  font-size: 12px;
+  font-family: "Space Grotesk", Inter, sans-serif;
+}
+
+.rg-factory-meta strong {
+  color: #fff2d1;
+}
+
+.rg-factory-meta code {
+  color: var(--cyan);
+}
+
 .rg-factory-machine {
-  min-height: 430px;
+  min-height: 360px;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(130px, 0.75fr) minmax(260px, 1.3fr) minmax(210px, 0.95fr) minmax(130px, 0.72fr);
+  grid-template-columns: minmax(150px, 0.8fr) minmax(280px, 1.3fr) minmax(230px, 0.95fr) minmax(160px, 0.75fr);
   gap: 14px;
   align-items: center;
   margin-top: 22px;
@@ -943,15 +973,17 @@ button {
 
 .rg-keys-panel {
   grid-area: keys;
+  height: 100%;
 }
 
 .rg-history {
   grid-area: history;
+  height: 100%;
 }
 
 .rg-panel-head {
   display: flex;
-  align-items: start;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
 }
@@ -970,6 +1002,7 @@ button {
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
+  align-self: center;
 }
 
 .rg-lenses {
@@ -1343,8 +1376,8 @@ button {
 
 .rg-academy-shell {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
@@ -1352,7 +1385,7 @@ button {
   position: sticky;
   top: 18px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .rg-academy-rail button {
@@ -1365,7 +1398,7 @@ button {
   column-gap: 10px;
   row-gap: 2px;
   align-items: center;
-  padding: 11px;
+  padding: 9px 10px;
   border: 1px solid rgba(247, 241, 232, 0.12);
   border-radius: 12px;
   color: #f1e7c8;
@@ -1395,31 +1428,35 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.25;
 }
 
 .rg-academy-rail small {
   grid-area: meta;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .rg-academy-stage {
   min-width: 0;
   border: 1px solid rgba(247, 241, 232, 0.13);
   border-radius: 18px;
-  padding: 18px;
+  padding: 14px;
   background:
     linear-gradient(145deg, rgba(255, 242, 209, 0.08), transparent 36%),
     linear-gradient(180deg, rgba(17, 25, 13, 0.38), rgba(37, 48, 27, 0.62));
 }
 
 .rg-stage-hero {
-  min-height: 170px;
+  min-height: 138px;
   display: flex;
   flex-direction: column;
   justify-content: end;
-  gap: 9px;
-  padding: 18px;
+  gap: 6px;
+  padding: 14px;
   border-radius: 14px;
   background:
     radial-gradient(circle at 18% 20%, rgba(240, 90, 59, 0.2), transparent 32%),
@@ -1429,7 +1466,7 @@ button {
 }
 
 .rg-stage-hero span {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -1437,15 +1474,16 @@ button {
 .rg-stage-hero h3 {
   margin: 0;
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: 46px;
-  line-height: 0.95;
+  font-size: clamp(34px, 5vw, 42px);
+  line-height: 0.9;
 }
 
 .rg-stage-hero p {
   max-width: 760px;
   margin: 0;
   color: #e9dfbf;
-  line-height: 1.55;
+  line-height: 1.45;
+  font-size: 14px;
 }
 
 .rg-ops-grid {
@@ -1462,14 +1500,15 @@ button {
   background:
     linear-gradient(135deg, rgba(255, 242, 209, 0.06), transparent 44%),
     rgba(17, 25, 13, 0.5);
-  padding: 14px;
+  padding: 12px;
 }
 
 .rg-ops article h3,
 .rg-interview-grid article h3 {
-  margin: 8px 0 8px;
+  margin: 6px 0 8px;
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: 24px;
+  font-size: 22px;
+  line-height: 1;
 }
 
 .rg-ops article p,
@@ -1480,20 +1519,22 @@ button {
 .rg-topic-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .rg-topic-columns section {
   min-width: 0;
-  padding: 10px;
+  padding: 9px 10px;
   border-radius: 12px;
   border: 1px solid rgba(247, 241, 232, 0.09);
   background: rgba(17, 25, 13, 0.42);
 }
 
 .rg-academy-stage h4 {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
 .rg-academy-stage ul,
@@ -1501,41 +1542,42 @@ button {
   margin: 0;
   padding-left: 18px;
   color: #ded3b3;
-  line-height: 1.55;
+  line-height: 1.45;
+  font-size: 14px;
 }
 
 .rg-academy-stage li,
 .rg-interview-grid li {
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 .rg-example-flow {
   display: grid;
-  gap: 7px;
-  margin-top: 14px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .rg-example-flow code {
   display: block;
   min-width: 0;
   overflow-wrap: anywhere;
-  padding: 9px 10px;
+  padding: 8px 10px;
   border-radius: 10px;
   color: #f1e7c8;
   background: #0b1208;
-  font-size: 12px;
+  font-size: 11px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
 .rg-drills {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rg-drill-bank {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .rg-drill-bank details {
@@ -1545,36 +1587,34 @@ button {
 .rg-interview-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .rg-drills summary {
   display: flex;
-  gap: 10px;
-  align-items: baseline;
+  gap: 8px;
+  align-items: flex-start;
   cursor: pointer;
-  font-weight: 800;
-  line-height: 1.35;
+  font-weight: 760;
+  line-height: 1.3;
+  font-size: 15px;
 }
 
 .rg-drills summary span {
   color: var(--cyan);
   font-family: "Space Grotesk", Inter, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
+  min-width: 28px;
 }
 
 .rg-drills p {
-  margin-top: 10px;
+  margin-top: 8px;
+  color: #e6dab8;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 @media (max-width: 1180px) {
-  .rg-left {
-    position: relative;
-    height: 760px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
   .rg-topbar {
     grid-template-columns: minmax(220px, 1fr) minmax(260px, 0.9fr);
   }
@@ -1595,7 +1635,7 @@ button {
   }
 
   .rg-factory-stage {
-    min-height: 620px;
+    min-height: 560px;
   }
 }
 
@@ -1616,7 +1656,34 @@ button {
 
   .rg-topbar {
     position: relative;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "brand player"
+      "score tabs";
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .rg-topbar .rg-brand {
+    grid-area: brand;
+    padding: 12px;
+  }
+
+  .rg-topbar .rg-player {
+    grid-area: player;
+    min-height: 0;
+  }
+
+  .rg-topbar .rg-scoreboard {
+    grid-area: score;
+  }
+
+  .rg-topbar .rg-tabs {
+    grid-area: tabs;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    min-height: 0;
+    padding: 5px;
   }
 
   .rg-factory-stage {
@@ -1636,7 +1703,6 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .rg-tabs,
   .rg-academy-shell,
   .rg-ops-grid,
   .rg-interview-grid,
@@ -1646,21 +1712,35 @@ button {
 }
 
 @media (max-width: 620px) {
-  .rg-left,
   .rg-main {
     padding: 12px;
-  }
-
-  .rg-left {
-    height: 690px;
   }
 
   .rg-header h2 {
     font-size: 38px;
   }
 
+  .rg-topbar {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "brand"
+      "player"
+      "score"
+      "tabs";
+    padding: 10px;
+  }
+
+  .rg-topbar .rg-brand {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .rg-topbar .rg-brand p {
+    font-size: 12px;
+  }
+
   .rg-brand h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .rg-scoreboard {
@@ -1672,11 +1752,19 @@ button {
   }
 
   .rg-scoreboard strong {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .rg-scoreboard span {
+    font-size: 11px;
   }
 
   .rg-factory-stage {
     padding: 12px;
+  }
+
+  .rg-factory-banner {
+    max-width: 100%;
   }
 
   .rg-factory-machine > *,
@@ -1693,14 +1781,13 @@ button {
   }
 
   .rg-factory-banner h2 {
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .rg-factory-machines {
     grid-template-columns: 1fr;
   }
 
-  .rg-tabs,
   .rg-lenses,
   .rg-deep-dive,
   .rg-command-teacher,
@@ -1713,7 +1800,45 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .rg-topbar .rg-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rg-topbar .rg-tabs button {
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
   .rg-command-row button {
     min-height: 44px;
+  }
+}
+
+@media (max-width: 430px) {
+  .rg-main {
+    padding: 10px;
+  }
+
+  .rg-header h2 {
+    font-size: 32px;
+  }
+
+  .rg-factory-stage {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .rg-factory-meta span {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .rg-package {
+    padding: 10px 11px;
+  }
+
+  .rg-panel {
+    padding: 12px;
   }
 }
