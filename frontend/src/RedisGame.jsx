@@ -24,7 +24,7 @@ import {
 import { Component, useEffect, useMemo, useRef, useState } from "react";
 import "./RedisGame.css";
 
-const API = import.meta?.env?.VITE_API_BASE || "http://localhost:8080/api";
+const API = import.meta?.env?.VITE_API_BASE || "/api";
 
 const MODULES = [
   {

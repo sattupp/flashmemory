@@ -261,6 +261,44 @@ All three services start with correct wiring automatically.
 
 ---
 
+## 🌍 Deploying
+
+Docker packages the app. Cloud just runs that package on a server.
+
+That distinction matters:
+- Docker gives you one repeatable build for laptop, VPS, or cloud.
+- Cloud providers differ, but they all can run the same Docker images.
+- Using Docker first avoids rebuilding the app separately for each host.
+
+### Production mode on a VM or cloud host
+
+1. Get a Linux VM or container host with Docker and Docker Compose installed.
+2. Clone the repo on that machine.
+3. Build and run the production stack:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+4. Open the public IP of that machine on port `80`.
+5. If you want a domain, point your DNS `A` record to that IP.
+6. If you want HTTPS, put a reverse proxy or managed TLS in front of it.
+
+### Where your intervention is needed
+
+- You need to create or provide the cloud account/VM.
+- You need to point DNS if you want a domain instead of a raw IP.
+- If the host has a firewall, you need to allow port `80`.
+
+### What I changed in the repo for deployment
+
+- Frontend now defaults to same-origin `/api` and `/ws`.
+- The frontend production image serves the built static app with Nginx.
+- The backend Dockerfile now uses a proper Maven build image.
+- `docker-compose.prod.yml` wires Redis, backend, and frontend together for a cloud host.
+
+---
+
 ### Option B — Run Locally (Step by step)
 
 #### Step 1 — Start Redis
